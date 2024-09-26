@@ -56,7 +56,9 @@ int main(int argc, char *argv[])
         SDL_RenderClear(renderer);
 
         // draw little rect on mouse
-        SDL_Rect little_rect = {x, y, 10, 10};
+        // make a rect
+        // SDL_Rect rect = {x, y, 10, 10};
+        // SDL_Rect dog = {x, y, 10, 10};
         draw_cursor(renderer, x, y);
 
         // Present the rendered frame
