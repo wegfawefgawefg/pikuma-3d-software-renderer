@@ -4,8 +4,9 @@
 #include <SDL2/SDL.h>
 
 #include "state.h"
+#include "draw_lib.h"
+#include "pixel_buffer.h"
 
-void draw(SDL_Renderer *renderer, State *state);
-void draw_cursor(SDL_Renderer *renderer, int x, int y);
+void draw(PixelBuffer *pb, State *state);
 
 #endif // DRAW_H

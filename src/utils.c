@@ -7,9 +7,6 @@ IPoint2D get_mouse_pos(void)
     SDL_GetMouseState(&window_x, &window_y);
     int x = window_x * RENDER_WIDTH / WIDTH;
     int y = window_y * RENDER_HEIGHT / HEIGHT;
-
-    // print
-    printf("Mouse pos: %d, %d\n", x, y);
     return (IPoint2D){x, y};
 }
 
