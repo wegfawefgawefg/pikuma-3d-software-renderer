@@ -1,5 +1,5 @@
 #include "step.h"
 
-void step(struct State *state)
+void step(State *state)
 {
 }

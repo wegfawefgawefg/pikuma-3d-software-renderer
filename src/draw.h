@@ -5,7 +5,7 @@
 
 #include "state.h"
 
-void draw(SDL_Renderer *renderer, struct State *state);
+void draw(SDL_Renderer *renderer, State *state);
 void draw_cursor(SDL_Renderer *renderer, int x, int y);
 
 #endif // DRAW_H

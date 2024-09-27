@@ -3,6 +3,6 @@
 
 #include "state.h"
 
-void step(struct State *state);
+void step(State *state);
 
 #endif // STEP_H

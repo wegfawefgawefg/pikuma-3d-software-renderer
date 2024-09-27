@@ -2,7 +2,17 @@
 
 #include "input.h"
 
-void process_input(struct State *state)
+bool is_left_mouse_button_down(MouseState *mouseState)
+{
+    return mouseState->buttons & SDL_BUTTON(SDL_BUTTON_LEFT);
+}
+
+bool is_right_mouse_button_down(MouseState *mouseState)
+{
+    return mouseState->buttons & SDL_BUTTON(SDL_BUTTON_RIGHT);
+}
+
+void process_input(State *state)
 {
     SDL_Event event;
     while (SDL_PollEvent(&event))

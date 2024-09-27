@@ -1,4 +1,6 @@
 #include "draw.h"
+#include "primitives.h"
+#include "utils.h"
 
 void draw_cursor(SDL_Renderer *renderer, int x, int y)
 {
@@ -7,9 +9,10 @@ void draw_cursor(SDL_Renderer *renderer, int x, int y)
     SDL_RenderDrawLine(renderer, x, y - 10, x, y + 10);
 }
 
-void draw(SDL_Renderer *renderer, struct State *state)
+void draw(SDL_Renderer *renderer, State *state)
 {
-    int x, y;
-    SDL_GetMouseState(&x, &y);
-    draw_cursor(renderer, x, y);
+    IPoint2D mousePos = get_mouse_pos();
+    // print mouse pos
+    printf("Mouse pos: %d, %d\n", mousePos.x, mousePos.y);
+    draw_cursor(renderer, mousePos.x, mousePos.y);
 }

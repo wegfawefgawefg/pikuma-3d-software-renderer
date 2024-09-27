@@ -3,10 +3,9 @@
 
 #include <stdbool.h>
 
-struct State
+typedef struct
 {
     bool quit;
-    // Add other state variables as needed
-};
+} State;
 
 #endif // STATE_H
