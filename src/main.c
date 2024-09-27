@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
         SDL_Rect destRect = {0, 0, WIDTH, HEIGHT};
         SDL_RenderCopy(renderer, renderTexture, NULL, &destRect);
 
-        // FPS calculation
+        // FPS meter
         frameCount++;
         if (SDL_GetTicks() - fpsLastTime >= 1000) // Update FPS every second
         {
@@ -104,15 +104,19 @@ int main(int argc, char *argv[])
             frameCount = 0;
             fpsLastTime = SDL_GetTicks();
         }
-
         draw_fps(renderer, font, fps);
+
         SDL_RenderPresent(renderer);
 
         // Frame rate limiting
-        frameTime = SDL_GetTicks() - frameStart;
-        if (frameTime < TARGET_FRAME_TIME)
+        if (FRAME_LIMITING)
         {
-            SDL_Delay((Uint32)(TARGET_FRAME_TIME - frameTime));
+            frameTime = SDL_GetTicks() - frameStart;
+            if (frameTime < TARGET_FRAME_TIME)
+            {
+                Uint32 leftover_time = TARGET_FRAME_TIME - frameTime;
+                SDL_Delay(leftover_time);
+            }
         }
     }
 
