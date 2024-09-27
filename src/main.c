@@ -9,6 +9,7 @@
 #include "pixel_buffer.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 
 int WIDTH;
 int HEIGHT;
@@ -32,6 +33,7 @@ void draw_fps(SDL_Renderer *renderer, TTF_Font *font, int fps)
 int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
+    IMG_Init(IMG_INIT_PNG);
     TTF_Init(); // Initialize SDL_ttf
     TTF_Font *font = TTF_OpenFont("./assets/fonts/DejaVuSans.ttf", 24);
     if (!font)
@@ -45,8 +47,10 @@ int main(int argc, char *argv[])
     SDL_DisplayMode dm;
     SDL_GetCurrentDisplayMode(0, &dm);
     // set width and height to 80% of monitor dims
-    WIDTH = dm.w * 0.2;
-    HEIGHT = dm.h * 0.2;
+    // WIDTH = dm.w * 0.8;
+    // HEIGHT = dm.h * 0.8;
+    WIDTH = WINDOW_WIDTH;
+    HEIGHT = WINDOW_HEIGHT;
     SDL_Window *window = SDL_CreateWindow(
         "Software Renderer",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -63,6 +67,40 @@ int main(int argc, char *argv[])
     SDL_Texture *renderTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
                                                    SDL_TEXTUREACCESS_TARGET, RENDER_WIDTH, RENDER_HEIGHT);
     PixelBuffer *pixel_buffer = create_pixel_buffer(RENDER_WIDTH, RENDER_HEIGHT);
+
+    // Load the gba background image
+    SDL_Surface *imageSurface = IMG_Load("./assets/textures/Clear-Purple-Shell-Game-Boy-Advance.png");
+    if (!imageSurface)
+    {
+        printf("Failed to load image: %s\n", IMG_GetError());
+        return 1;
+    }
+    SDL_Texture *imageTexture = SDL_CreateTextureFromSurface(renderer, imageSurface);
+    SDL_FreeSurface(imageSurface);
+
+    // Load the pointer image
+    SDL_Surface *pointerSurface = IMG_Load("./assets/textures/pointer.png");
+    if (!pointerSurface)
+    {
+        printf("Failed to load image: %s\n", IMG_GetError());
+        return 1;
+    }
+    SDL_Texture *pointerTexture = SDL_CreateTextureFromSurface(renderer, pointerSurface);
+    int pointer_width = pointerSurface->w;
+    int pointer_height = pointerSurface->h;
+    SDL_FreeSurface(pointerSurface);
+
+    // Load the gbalight
+    SDL_Surface *gbaLightSurface = IMG_Load("./assets/textures/gbalight.png");
+    if (!gbaLightSurface)
+    {
+        printf("Failed to load image: %s\n", IMG_GetError());
+        return 1;
+    }
+    SDL_Texture *gbaLightTexture = SDL_CreateTextureFromSurface(renderer, gbaLightSurface);
+    int gba_light_width = gbaLightSurface->w;
+    int gba_light_height = gbaLightSurface->h;
+    SDL_FreeSurface(gbaLightSurface);
 
     int fps = 0;
     int frameCount = 0;
@@ -93,9 +131,42 @@ int main(int argc, char *argv[])
         // copy pixel buffer to render texture
         copy_to_texture(pixel_buffer, renderTexture);
 
-        // Draw the render texture to the window
-        SDL_Rect destRect = {0, 0, WIDTH, HEIGHT};
-        SDL_RenderCopy(renderer, renderTexture, NULL, &destRect);
+        if (USE_GBA_BORDER)
+        {
+            // Draw the render texture to the window
+            SDL_Rect destRect = {GBA_WINDOW_START_X, GBA_WINDOW_START_Y, GBA_WINDOW_WIDTH, GBA_WINDOW_HEIGHT};
+            SDL_RenderCopy(renderer, renderTexture, NULL, &destRect);
+
+            // Draw the loaded image onto the window
+            SDL_Rect imageRect = {0, 0, WIDTH, HEIGHT};
+            SDL_RenderCopy(renderer, imageTexture, NULL, &imageRect);
+        }
+        else
+        {
+            // Draw the render texture to the window
+            SDL_Rect destRect = {0, 0, WIDTH, HEIGHT};
+            SDL_RenderCopy(renderer, renderTexture, NULL, &destRect);
+        }
+
+        // draw a red rect at mouse pos on the window
+        int x, y;
+        SDL_GetMouseState(&x, &y);
+        // SDL_Rect rect = {x, y, 10, 10};
+        // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        // SDL_RenderFillRect(renderer, &rect);
+
+        // Draw the pointer image at the mouse
+        SDL_Rect pointerRect = {x, y, pointer_width * WINDOW_SCALE, pointer_height * WINDOW_SCALE};
+        SDL_RenderCopy(renderer, pointerTexture, NULL, &pointerRect);
+
+        // Draw the gbalight image
+        // vary its brightness based on sin of time
+        int light_brightness = 128 + 127 * sin(SDL_GetTicks() / 1000.0 * 5.0);
+        // minimum brightness of 100
+        light_brightness = light_brightness < 100 ? 100 : light_brightness;
+        SDL_SetTextureColorMod(gbaLightTexture, light_brightness, light_brightness, light_brightness);
+        SDL_Rect gbaLightRect = {GBA_LIGHT_X, GBA_LIGHT_Y, gba_light_width * WINDOW_SCALE, gba_light_height * WINDOW_SCALE};
+        SDL_RenderCopy(renderer, gbaLightTexture, NULL, &gbaLightRect);
 
         // FPS meter
         frameCount++;
@@ -122,6 +193,9 @@ int main(int argc, char *argv[])
     }
 
     // Clean up
+    destroy_pixel_buffer(pixel_buffer);
+    free_state(&state);
+
     TTF_CloseFont(font);
     SDL_DestroyTexture(renderTexture);
     SDL_DestroyRenderer(renderer);

@@ -22,5 +22,6 @@ typedef struct
 } State;
 
 State *new_state(void);
+void free_state(State *state);
 
 #endif // STATE_H

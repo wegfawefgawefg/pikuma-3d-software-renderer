@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "primitives.h": "c",
-        "globals.h": "c",
-        "input.h": "c"
-    }
-}

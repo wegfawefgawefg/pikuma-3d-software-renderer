@@ -6,12 +6,17 @@ set(CMAKE_C_STANDARD 11)
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 
-# Use pkg-config to find SDL2_ttf
+# Use pkg-config to find SDL2_ttf and SDL2_image
 include(FindPkgConfig)
 pkg_check_modules(SDL2_TTF REQUIRED SDL2_ttf)
+pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
 
 if(NOT SDL2_TTF_FOUND)
     message(FATAL_ERROR "SDL2_ttf not found. Please install SDL2_ttf.")
+endif()
+
+if(NOT SDL2_IMAGE_FOUND)
+    message(FATAL_ERROR "SDL2_image not found. Please install SDL2_image.")
 endif()
 
 # Add the src directory to the include path
@@ -24,10 +29,10 @@ file(GLOB SOURCES "src/*.c")
 add_executable(game ${SOURCES})
 
 # Link the libraries
-target_link_libraries(game ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES})
+target_link_libraries(game ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
 
 # Add include directories
-target_include_directories(game PRIVATE ${SDL2_TTF_INCLUDE_DIRS})
+target_include_directories(game PRIVATE ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -50,6 +55,7 @@ else()
         -Wwrite-strings -Wstrict-prototypes -Wold-style-definition
         -Wredundant-decls -Wnested-externs -Wmissing-include-dirs
         ${SDL2_TTF_CFLAGS_OTHER}
+        ${SDL2_IMAGE_CFLAGS_OTHER}
         $<$<CONFIG:RELEASE>:-O2>
         $<$<CONFIG:DEBUG>:-O0 -g>
     )

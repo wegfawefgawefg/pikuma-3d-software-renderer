@@ -39,3 +39,8 @@ State *new_state(void)
 
     return state;
 }
+
+void free_state(State *state)
+{
+    free(state);
+}

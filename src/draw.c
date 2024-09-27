@@ -1,6 +1,6 @@
 #include "draw.h"
 #include "primitives.h"
-#include "utils.h"
+#include "input.h"
 
 void draw(PixelBuffer *pb, State *state)
 {

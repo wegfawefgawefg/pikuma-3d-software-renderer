@@ -10,6 +10,8 @@ typedef struct
     IPoint2D pos;
 } MouseState;
 
+IPoint2D get_mouse_pos(void);
+IPoint2D get_mouse_pos_in_gba_window(void);
 bool is_left_mouse_button_down(MouseState *mouseState);
 bool is_right_mouse_button_down(MouseState *mouseState);
 void process_input(State *state);

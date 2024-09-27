@@ -7,7 +7,7 @@
                 "/usr/include/SDL2"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": null,
             "cStandard": "c11",
             "intelliSenseMode": "gcc-x64",
             "compilerArgs": [
