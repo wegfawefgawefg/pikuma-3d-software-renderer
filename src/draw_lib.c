@@ -56,6 +56,13 @@ void draw_rect_lines(PixelBuffer *pb, int x, int y, int w, int h, uint32_t color
     draw_line(pb, x, y + h, x, y, color);
 }
 
+void draw_triangle_lines(PixelBuffer *pb, Triangle t, uint32_t color)
+{
+    draw_line(pb, t.p1.x, t.p1.y, t.p2.x, t.p2.y, color);
+    draw_line(pb, t.p2.x, t.p2.y, t.p3.x, t.p3.y, color);
+    draw_line(pb, t.p3.x, t.p3.y, t.p1.x, t.p1.y, color);
+}
+
 // //////////////////////// COMPOUND DRAWING FUNCTIONS ////////////////////////
 void draw_cursor(PixelBuffer *pb, int x, int y, int size, uint32_t color)
 {

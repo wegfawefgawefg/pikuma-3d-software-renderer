@@ -46,19 +46,25 @@ void clear_pixel_buffer(PixelBuffer *pb, uint32_t color)
     }
 }
 
-// just subtract amount from each color channel, and alpha each frame
+// just subtract amount from each color channel and alpha channel, colors are 4 bytes
 void fade_pixel_buffer(PixelBuffer *pb, uint8_t amount)
 {
     for (int i = 0; i < pb->width * pb->height; i++)
     {
         uint32_t color = pb->pixels[i];
-        uint8_t r = (color >> 16) & 0xFF;
-        uint8_t g = (color >> 8) & 0xFF;
-        uint8_t b = color & 0xFF;
-        r = r > amount ? r - amount : 0;
-        g = g > amount ? g - amount : 0;
-        b = b > amount ? b - amount : 0;
-        pb->pixels[i] = (r << 16) | (g << 8) | b;
+        uint8_t *color_bytes = (uint8_t *)&color;
+        for (int j = 0; j < 4; j++)
+        {
+            if (color_bytes[j] > amount)
+            {
+                color_bytes[j] -= amount;
+            }
+            else
+            {
+                color_bytes[j] = 0;
+            }
+        }
+        pb->pixels[i] = color;
     }
 }
 

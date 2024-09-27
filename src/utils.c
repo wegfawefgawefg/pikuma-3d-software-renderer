@@ -22,3 +22,8 @@ float rand_range(float min, float max)
     // Scale and shift it to the desired range
     return min + scale * (max - min);
 }
+
+float rand_range_int(int min, int max)
+{
+    return rand() % (max - min + 1) + min;
+}

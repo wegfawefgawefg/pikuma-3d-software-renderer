@@ -45,8 +45,8 @@ int main(int argc, char *argv[])
     SDL_DisplayMode dm;
     SDL_GetCurrentDisplayMode(0, &dm);
     // set width and height to 80% of monitor dims
-    WIDTH = dm.w * 0.8;
-    HEIGHT = dm.h * 0.8;
+    WIDTH = dm.w * 0.2;
+    HEIGHT = dm.h * 0.2;
     SDL_Window *window = SDL_CreateWindow(
         "Software Renderer",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     SDL_ShowCursor(SDL_DISABLE);
 
     // Main loop
-    State state = {.quit = false};
+    State state = *new_state();
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     // Create render texture
@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
 
         process_input(&state);
         step(&state);
+        // clear_pixel_buffer(pixel_buffer, 0x00000000);
         fade_pixel_buffer(pixel_buffer, 8);
         draw(pixel_buffer, &state);
 

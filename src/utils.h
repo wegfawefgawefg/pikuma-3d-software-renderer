@@ -7,5 +7,6 @@
 
 IPoint2D get_mouse_pos(void);
 float rand_range(float min, float max);
+float rand_range_int(int min, int max);
 
 #endif // UTILS_H
