@@ -1,5 +1,6 @@
-#include "input.h"
 #include <SDL2/SDL.h>
+
+#include "input.h"
 
 void process_input(struct State *state)
 {

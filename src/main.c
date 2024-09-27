@@ -6,10 +6,11 @@
 
 #include "state.h"
 #include "input.h"
+#include "step.h"
+#include "draw.h"
 
-// const of the dims
-const int WIDTH = 800;
-const int HEIGHT = 600;
+int WIDTH;
+int HEIGHT;
 
 float rand_range(float min, float max)
 {
@@ -20,16 +21,17 @@ float rand_range(float min, float max)
     return min + scale * (max - min);
 }
 
-void draw_cursor(SDL_Renderer *renderer, int x, int y)
-{
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderDrawLine(renderer, x - 10, y, x + 10, y);
-    SDL_RenderDrawLine(renderer, x, y - 10, x, y + 10);
-}
-
 int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO);
+
+    // get monitor dims
+    SDL_DisplayMode dm;
+    SDL_GetCurrentDisplayMode(0, &dm);
+    // set width and height to 80% of monitor dims
+    WIDTH = dm.w * 0.8;
+    HEIGHT = dm.h * 0.8;
+
     SDL_Window *window = SDL_CreateWindow(
         "Software Renderer",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -48,20 +50,13 @@ int main(int argc, char *argv[])
     while (!state.quit)
     {
         process_input(&state);
-        int x, y;
-        SDL_GetMouseState(&x, &y);
 
-        // Clear the screen
+        step(&state);
+
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
+        draw(renderer, &state);
 
-        // draw little rect on mouse
-        // make a rect
-        // SDL_Rect rect = {x, y, 10, 10};
-        // SDL_Rect dog = {x, y, 10, 10};
-        draw_cursor(renderer, x, y);
-
-        // Present the rendered frame
         SDL_RenderPresent(renderer);
     }
 
