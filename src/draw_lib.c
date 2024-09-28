@@ -125,3 +125,67 @@ void draw_cursor(PixelBuffer *pb, int x, int y, int size, uint32_t color)
     draw_line(pb, x - size, y, x + size, y, color);
     draw_line(pb, x, y - size, x, y + size, color);
 }
+
+void draw_grid(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32_t color)
+{
+    for (int x = start.x; x < end.x; x += spacing)
+    {
+        draw_line(pb, x, start.y, x, end.y, color);
+    }
+    for (int y = start.y; y < end.y; y += spacing)
+    {
+        draw_line(pb, start.x, y, end.x, y, color);
+    }
+
+    // draw the rightmost and bottommost lines
+    draw_line(pb, end.x, start.y, end.x, end.y, color);
+    draw_line(pb, start.x, end.y, end.x, end.y, color);
+}
+
+// draw a grid with dots instead of , puts a dot at each intersection
+void draw_grid_dots(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32_t color)
+{
+    for (int x = start.x; x < end.x + 1; x += spacing)
+    {
+        for (int y = start.y; y < end.y + 1; y += spacing)
+        {
+            set_pixel(pb, x, y, color);
+        }
+    }
+
+    // draw the rightmost and bottommost line of dots
+    for (int x = start.x; x < end.x; x += spacing)
+    {
+        set_pixel(pb, x, end.y, color);
+    }
+
+    for (int y = start.y; y < end.y; y += spacing)
+    {
+        set_pixel(pb, end.x, y, color);
+    }
+
+    // bottom right corner
+    set_pixel(pb, end.x, end.y, color);
+}
+
+// draw_checkerboard
+// takes in two colors and the size of the squares
+//    draw_checkerboard(pb, ivec2_create(0, 0), ivec2_create(pb->width - 1, pb->height - 1), 20, 0xFF333333, 0xFF444444);
+
+void draw_checkerboard(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32_t color1, uint32_t color2)
+{
+    for (int x = start.x; x < end.x + 1; x += spacing)
+    {
+        for (int y = start.y; y < end.y + 1; y += spacing)
+        {
+            if ((x / spacing + y / spacing) % 2 == 0)
+            {
+                draw_rect(pb, x, y, spacing, spacing, color1);
+            }
+            else
+            {
+                draw_rect(pb, x, y, spacing, spacing, color2);
+            }
+        }
+    }
+}
