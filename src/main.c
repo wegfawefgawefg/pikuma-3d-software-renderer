@@ -102,6 +102,14 @@ int main(int argc, char *argv[])
     int gba_light_height = gbaLightSurface->h;
     SDL_FreeSurface(gbaLightSurface);
 
+    // Load the pointer image, but into a pixel buffer
+    PixelBuffer *pointerBuffer = create_pixel_buffer(pointer_width, pointer_height);
+    if (load_png_into_pixelbuffer("./assets/textures/pointer.png", pointerBuffer) != 0)
+    {
+        printf("Failed to load image into pixel buffer\n");
+        return 1;
+    }
+
     int fps = 0;
     int frameCount = 0;
     Uint32 fpsLastTime = SDL_GetTicks();
@@ -114,9 +122,10 @@ int main(int argc, char *argv[])
 
         process_input(&state);
         step(&state);
-        clear_pixel_buffer(pixel_buffer, 0x00000000);
-        // fade_pixel_buffer(pixel_buffer, 8);
-        draw(pixel_buffer, &state);
+        // clear_pixel_buffer(pixel_buffer, 0x00000000);
+        fade_pixel_buffer(pixel_buffer, 1);
+        color_rotate(pixel_buffer, 10.0);
+        draw(pixel_buffer, &state, pointerBuffer);
 
         // clear the render texture
         SDL_SetRenderTarget(renderer, renderTexture);
@@ -176,7 +185,10 @@ int main(int argc, char *argv[])
             frameCount = 0;
             fpsLastTime = SDL_GetTicks();
         }
-        draw_fps(renderer, font, fps);
+        if (SHOW_FPS)
+        {
+            draw_fps(renderer, font, fps);
+        }
 
         SDL_RenderPresent(renderer);
 

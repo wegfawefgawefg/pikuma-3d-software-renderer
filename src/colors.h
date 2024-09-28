@@ -1,6 +1,8 @@
 #ifndef COLORS_H
 #define COLORS_H
 
+#include <stdint.h>
+
 // Basic colors
 #define COLOR_BLACK 0x000000FF
 #define COLOR_WHITE 0xFFFFFFFF
@@ -49,5 +51,7 @@
 #define COLOR_TRANS_BLACK 0x00000080
 #define COLOR_TRANS_WHITE 0xFFFFFF80
 #define COLOR_TRANS_PURPLE 0x80008080
+
+uint32_t set_alpha(uint32_t color, uint8_t alpha);
 
 #endif // COLORS_H

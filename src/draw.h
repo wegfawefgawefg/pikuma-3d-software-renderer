@@ -7,6 +7,6 @@
 #include "draw_lib.h"
 #include "pixel_buffer.h"
 
-void draw(PixelBuffer *pb, State *state);
+void draw(PixelBuffer *pb, State *state, PixelBuffer *pointerBuffer);
 
 #endif // DRAW_H

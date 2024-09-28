@@ -42,6 +42,29 @@ Vec2 vec2_normalize(Vec2 v)
     return v;
 }
 
+Vec2 rotate_point_around_pivot(Vec2 point, Vec2 pivot, float degrees)
+{
+    // Convert degrees to radians
+    float radians = degrees * (M_PI / 180.0f);
+    float cos_r = cosf(radians);
+    float sin_r = sinf(radians);
+
+    // Translate point to origin
+    float translated_x = point.x - pivot.x;
+    float translated_y = point.y - pivot.y;
+
+    // Rotate the point
+    float rotated_x = translated_x * cos_r - translated_y * sin_r;
+    float rotated_y = translated_x * sin_r + translated_y * cos_r;
+
+    // Translate back
+    Vec2 result;
+    result.x = rotated_x + pivot.x;
+    result.y = rotated_y + pivot.y;
+
+    return result;
+}
+
 // IVec2 implementations (integer)
 IVec2 ivec2_create(int x, int y)
 {
@@ -51,6 +74,11 @@ IVec2 ivec2_create(int x, int y)
 IVec2 vec2_to_ivec2(Vec2 v)
 {
     return (IVec2){(int)v.x, (int)v.y};
+}
+
+Vec2 ivec2_to_vec2(IVec2 v)
+{
+    return (Vec2){(float)v.x, (float)v.y};
 }
 
 IVec2 ivec2_add(IVec2 a, IVec2 b)
