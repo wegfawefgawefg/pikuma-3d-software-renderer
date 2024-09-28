@@ -1,13 +1,13 @@
 #include "step.h"
 #include "globals.h"
 
-void step_point(Point2D *point, Point2D *velocity)
+void step_point(Vec2 *point, Vec2 *velocity)
 {
     point->x += velocity->x;
     point->y += velocity->y;
 }
 
-void point_reverse_on_walls(Point2D *point, Point2D *velocity)
+void point_reverse_on_walls(Vec2 *point, Vec2 *velocity)
 {
     if (point->x < 0 || point->x > RENDER_WIDTH)
     {

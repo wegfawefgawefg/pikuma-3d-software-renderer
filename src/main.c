@@ -114,8 +114,8 @@ int main(int argc, char *argv[])
 
         process_input(&state);
         step(&state);
-        // clear_pixel_buffer(pixel_buffer, 0x00000000);
-        fade_pixel_buffer(pixel_buffer, 8);
+        clear_pixel_buffer(pixel_buffer, 0x00000000);
+        // fade_pixel_buffer(pixel_buffer, 8);
         draw(pixel_buffer, &state);
 
         // clear the render texture

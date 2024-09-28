@@ -3,7 +3,7 @@
 #include "input.h"
 #include "globals.h"
 
-IPoint2D get_mouse_pos(void)
+IVec2 get_mouse_pos(void)
 {
     int window_x, window_y;
     SDL_GetMouseState(&window_x, &window_y);
@@ -18,7 +18,7 @@ IPoint2D get_mouse_pos(void)
         x = window_x * RENDER_WIDTH / WIDTH;
         y = window_y * RENDER_HEIGHT / HEIGHT;
     }
-    return (IPoint2D){x, y};
+    return (IVec2){x, y};
 }
 
 Uint32 get_mouse_buttons(void)

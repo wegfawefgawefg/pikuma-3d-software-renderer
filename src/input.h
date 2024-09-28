@@ -7,11 +7,11 @@
 typedef struct
 {
     Uint32 buttons;
-    IPoint2D pos;
+    IVec2 pos;
 } MouseState;
 
-IPoint2D get_mouse_pos(void);
-IPoint2D get_mouse_pos_in_gba_window(void);
+IVec2 get_mouse_pos(void);
+IVec2 get_mouse_pos_in_gba_window(void);
 bool is_left_mouse_button_down(MouseState *mouseState);
 bool is_right_mouse_button_down(MouseState *mouseState);
 void process_input(State *state);

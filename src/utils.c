@@ -13,3 +13,6 @@ float rand_range_int(int min, int max)
 {
     return rand() % (max - min + 1) + min;
 }
+
+int imin(int a, int b) { return (a < b) ? a : b; }
+int imax(int a, int b) { return (a > b) ? a : b; }

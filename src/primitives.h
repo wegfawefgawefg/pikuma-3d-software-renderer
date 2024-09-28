@@ -3,17 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-typedef struct
-{
-    float x;
-    float y;
-} Point2D;
-
-typedef struct
-{
-    int x;
-    int y;
-} IPoint2D;
+#include "vec2.h"
 
 typedef struct
 {
@@ -25,20 +15,20 @@ typedef struct
 
 typedef struct
 {
-    Point2D p1;
-    Point2D p2;
-    Point2D p3;
+    Vec2 p1;
+    Vec2 p2;
+    Vec2 p3;
 } Triangle;
 
 typedef struct
 {
-    Point2D p1;
-    Point2D p2;
+    Vec2 p1;
+    Vec2 p2;
 } Line;
 
 typedef struct
 {
-    Point2D center;
+    Vec2 center;
     float radius;
 } Circle;
 

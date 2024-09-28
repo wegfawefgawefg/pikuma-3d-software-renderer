@@ -1,6 +1,7 @@
 #include "draw.h"
 #include "primitives.h"
 #include "utils.h"
+#include "vec2.h"
 
 void draw_line(PixelBuffer *pb, int x0, int y0, int x1, int y1, uint32_t color)
 {
@@ -61,6 +62,61 @@ void draw_triangle_lines(PixelBuffer *pb, Triangle t, uint32_t color)
     draw_line(pb, t.p1.x, t.p1.y, t.p2.x, t.p2.y, color);
     draw_line(pb, t.p2.x, t.p2.y, t.p3.x, t.p3.y, color);
     draw_line(pb, t.p3.x, t.p3.y, t.p1.x, t.p1.y, color);
+}
+
+static inline int edge_function(IVec2 a, IVec2 b, IVec2 p)
+{
+    return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+}
+
+void draw_triangle(PixelBuffer *pb, Triangle t, uint32_t color)
+{
+    IVec2 p1 = vec2_to_ivec2(t.p1);
+    IVec2 p2 = vec2_to_ivec2(t.p2);
+    IVec2 p3 = vec2_to_ivec2(t.p3);
+
+    // Compute bounding box
+    int minX = imin(imin(p1.x, p2.x), p3.x);
+    int minY = imin(imin(p1.y, p2.y), p3.y);
+    int maxX = imax(imax(p1.x, p2.x), p3.x);
+    int maxY = imax(imax(p1.y, p2.y), p3.y);
+
+    // Clip against screen bounds
+    minX = imax(minX, 0);
+    minY = imax(minY, 0);
+    maxX = imin(maxX, pb->width - 1);
+    maxY = imin(maxY, pb->height - 1);
+
+    // Determine triangle orientation
+    int area = edge_function(p1, p2, p3);
+    bool clockwise = area <= 0;
+
+    IVec2 p;
+    for (p.y = minY; p.y <= maxY; p.y++)
+    {
+        for (p.x = minX; p.x <= maxX; p.x++)
+        {
+            int w1 = edge_function(p1, p2, p);
+            int w2 = edge_function(p2, p3, p);
+            int w3 = edge_function(p3, p1, p);
+
+            // If p is on or inside all edges, render pixel
+            if (clockwise)
+            {
+                if (w1 <= 0 && w2 <= 0 && w3 <= 0)
+                {
+                    set_pixel(pb, p.x, p.y, color);
+                }
+            }
+            else
+            {
+                if (w1 >= 0 && w2 >= 0 && w3 >= 0)
+                {
+                    set_pixel(pb, p.x, p.y, color);
+                }
+            }
+        }
+    }
 }
 
 // //////////////////////// COMPOUND DRAWING FUNCTIONS ////////////////////////

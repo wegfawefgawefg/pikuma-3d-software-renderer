@@ -12,7 +12,7 @@ typedef struct
     uint32_t color;
 } MetaTriangle;
 
-#define NUM_TRIANGLES 10
+#define NUM_TRIANGLES 4
 
 typedef struct
 {
