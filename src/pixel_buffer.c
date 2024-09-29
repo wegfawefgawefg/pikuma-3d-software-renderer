@@ -306,50 +306,6 @@ void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos,
     destroy_pixel_buffer(rotated);
 }
 
-// void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale, float angle, Vec2 pin)
-// {
-//     if (!src || !dst || scale.x <= 0 || scale.y <= 0)
-//         return;
-
-//     // Scale first
-//     PixelBuffer *scaled = scale_pixelbuffer(src, scale);
-//     if (!scaled)
-//         return; // Handle allocation failure
-
-//     // Then rotate
-//     PixelBuffer *rotated = rotate_pixelbuffer(scaled, angle);
-//     destroy_pixel_buffer(scaled);
-//     if (!rotated)
-//         return; // Handle allocation failure
-
-//     // Calculate the position of the pin in the original image
-//     Vec2 src_pin_offset = vec2_sub(pin, vec2_create(0, 0));
-
-//     // Calculate the position of the pin after scaling
-//     Vec2 scaled_pin_offset = vec2_mul(src_pin_offset, scale);
-
-//     // Rotate the scaled pin offset
-//     float cos_angle = cosf(angle * M_PI / 180.0f);
-//     float sin_angle = sinf(angle * M_PI / 180.0f);
-//     Vec2 rotated_pin_offset = {
-//         scaled_pin_offset.x * cos_angle - scaled_pin_offset.y * sin_angle,
-//         scaled_pin_offset.x * sin_angle + scaled_pin_offset.y * cos_angle};
-
-//     // Calculate the final position adjustment
-//     Vec2 position_adjustment = vec2_sub(src_pin_offset, rotated_pin_offset);
-
-//     // Calculate the final blitting position
-//     IVec2 final_pos = {
-//         pos.x + (int)roundf(position_adjustment.x),
-//         pos.y + (int)roundf(position_adjustment.y)};
-
-//     // Blit the rotated and scaled buffer onto the destination
-//     blit(rotated, dst, final_pos.x, final_pos.y);
-
-//     // Clean up
-//     destroy_pixel_buffer(rotated);
-// }
-
 void blit_dumb(PixelBuffer *src, PixelBuffer *dst, int x, int y)
 {
     // determine the intersection bounds
