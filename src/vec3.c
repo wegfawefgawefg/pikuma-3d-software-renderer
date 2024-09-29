@@ -22,6 +22,11 @@ Vec3 vec3_mul(Vec3 v, float scalar)
     return (Vec3){v.x * scalar, v.y * scalar, v.z * scalar};
 }
 
+Vec3 vec3_fmul(Vec3 v, float scalar)
+{
+    return (Vec3){v.x * scalar, v.y * scalar, v.z * scalar};
+}
+
 Vec3 vec3_div(Vec3 v, float scalar)
 {
     return (Vec3){v.x / scalar, v.y / scalar, v.z / scalar};
@@ -55,25 +60,45 @@ Vec3 vec3_normalize(Vec3 v)
     return v;
 }
 
-// vec3 rotate point around pivot
-Vec3 vec3_rotate_point_around_axis(Vec3 point, Vec3 axis, float degrees)
+Vec3 vec3_rotate_point(Vec3 point, Vec3 center, Vec3 rotation)
 {
-    // Convert degrees to radians
-    float radians = degrees * (M_PI / 180.0f);
-    float cos_r = cosf(radians);
-    float sin_r = sinf(radians);
+    Vec3 result = point;
 
     // Translate point to origin
-    float translated_x = point.x - axis.x;
-    float translated_y = point.y - axis.y;
-    float translated_z = point.z - axis.z;
+    result.x -= center.x;
+    result.y -= center.y;
+    result.z -= center.z;
 
-    // Rotate the point
-    float rotated_x = translated_x * cos_r - translated_y * sin_r;
-    float rotated_y = translated_x * sin_r + translated_y * cos_r;
+    // Rotate around X axis
+    float cosX = cos(rotation.x);
+    float sinX = sin(rotation.x);
+    float y = result.y;
+    float z = result.z;
+    result.y = y * cosX - z * sinX;
+    result.z = z * cosX + y * sinX;
 
-    // Translate back
-    return vec3_create(rotated_x + axis.x, rotated_y + axis.y, translated_z);
+    // Rotate around Y axis
+    float cosY = cos(rotation.y);
+    float sinY = sin(rotation.y);
+    float x = result.x;
+    z = result.z;
+    result.x = x * cosY + z * sinY;
+    result.z = z * cosY - x * sinY;
+
+    // Rotate around Z axis
+    float cosZ = cos(rotation.z);
+    float sinZ = sin(rotation.z);
+    x = result.x;
+    y = result.y;
+    result.x = x * cosZ - y * sinZ;
+    result.y = y * cosZ + x * sinZ;
+
+    // Translate point back
+    result.x += center.x;
+    result.y += center.y;
+    result.z += center.z;
+
+    return result;
 }
 
 // IVec3 implementations (integer)

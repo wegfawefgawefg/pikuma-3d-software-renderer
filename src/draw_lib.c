@@ -105,14 +105,14 @@ void draw_triangle(PixelBuffer *pb, Triangle t, uint32_t color)
             {
                 if (w1 <= 0 && w2 <= 0 && w3 <= 0)
                 {
-                    set_pixel(pb, p.x, p.y, color);
+                    set_pixel_alpha(pb, p.x, p.y, color);
                 }
             }
             else
             {
                 if (w1 >= 0 && w2 >= 0 && w3 >= 0)
                 {
-                    set_pixel(pb, p.x, p.y, color);
+                    set_pixel_alpha(pb, p.x, p.y, color);
                 }
             }
         }
@@ -188,4 +188,21 @@ void draw_checkerboard(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uin
             }
         }
     }
+}
+
+void draw_ortho_quad_lines(PixelBuffer *pb, Quad *quad, uint32_t color)
+{
+    draw_line(pb, quad->p1.x, quad->p1.y, quad->p2.x, quad->p2.y, color);
+    draw_line(pb, quad->p2.x, quad->p2.y, quad->p3.x, quad->p3.y, color);
+    draw_line(pb, quad->p3.x, quad->p3.y, quad->p4.x, quad->p4.y, color);
+    draw_line(pb, quad->p4.x, quad->p4.y, quad->p1.x, quad->p1.y, color);
+}
+
+void draw_ortho_quad(PixelBuffer *pb, Quad *quad, uint32_t color)
+{
+    Triangle t1 = {vec2_create(quad->p1.x, quad->p1.y), vec2_create(quad->p2.x, quad->p2.y), vec2_create(quad->p3.x, quad->p3.y)};
+    Triangle t2 = {vec2_create(quad->p1.x, quad->p1.y), vec2_create(quad->p3.x, quad->p3.y), vec2_create(quad->p4.x, quad->p4.y)};
+
+    draw_triangle(pb, t1, color);
+    draw_triangle(pb, t2, color);
 }

@@ -32,8 +32,8 @@ void step_meta_triangle(MetaTriangle *mt)
 
 void step(State *state)
 {
-    for (int i = 0; i < NUM_TRIANGLES; i++)
-    {
-        step_meta_triangle(&state->triangles[i]);
-    }
+    // for (int i = 0; i < NUM_TRIANGLES; i++)
+    // {
+    //     step_meta_triangle(&state->triangles[i]);
+    // }
 }

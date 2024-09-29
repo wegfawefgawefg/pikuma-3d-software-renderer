@@ -41,16 +41,31 @@ typedef struct
     float radius;
 } Circle;
 
+//////////////////////// QUADS ////////////////////////
 typedef struct
 {
     Quad *quads;
     int count;
 } Quads;
 
-Quads *create_cube(Vec3 center, float size);
-void rotate_quad_around_axis(Quad *quad, Vec3 axis, float degrees);
-void rotate_quads(Quads *quads, Vec3 axis, float degrees);
+Quads *create_quads_cube(Vec3 center, float size);
+Quads *create_quads_pyramid(Vec3 center, float base_size, float height);
+Quads *create_quads_prism(Vec3 center, float base_width, float base_depth, float height);
+Quads *create_quads_octahedron(Vec3 center, float size);
+Quads *create_quads_arrow(float length, float width);
+
+void destroy_quads(Quads *quads);
+
+void shift_quad(Quad *quad, Vec3 shift);
+void shift_quads(Quads *quads, Vec3 shift);
+void rotate_quad(Quad *quad, Vec3 center, Vec3 rotation);
+void rotate_quads(Quads *quads, Vec3 center, Vec3 rotation);
+
+Vec3 get_quad_center(Quad *quad);
 Vec3 get_quad_normal(Quad *quad);
 Vec3 *get_quads_normals(Quads *quads);
+
+int compare_quads(const void *a, const void *b);
+void zsort_quads(Quads *quads);
 
 #endif // PRIMITIVES_H

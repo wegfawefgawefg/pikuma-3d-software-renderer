@@ -1,6 +1,16 @@
 {
     "files.associations": {
         "primitives.h": "c",
-        "assets.h": "c"
+        "assets.h": "c",
+        "*.tcc": "c",
+        "chrono": "c",
+        "functional": "c",
+        "string_view": "c",
+        "random": "c",
+        "istream": "c",
+        "limits": "c",
+        "numeric": "c",
+        "algorithm": "c",
+        "math.h": "c"
     }
 }

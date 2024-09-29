@@ -36,6 +36,7 @@ State *new_state(void)
     {
         randomize_meta_triangle(&state->triangles[i]);
     }
+    state->selection = 0;
 
     return state;
 }

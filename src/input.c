@@ -51,6 +51,18 @@ void process_input(State *state)
             {
                 state->quit = true;
             }
+
+            // if left arrow, decrease selection by one if greater than 0 else 0
+            if (event.key.keysym.sym == SDLK_LEFT)
+            {
+                state->selection = state->selection > 0 ? state->selection - 1 : 0;
+            }
+            // if right arrow, increase selection by 1 until 2
+            if (event.key.keysym.sym == SDLK_RIGHT)
+            {
+                state->selection = state->selection < 2 ? state->selection + 1 : 2;
+            }
+
             break;
         }
     }

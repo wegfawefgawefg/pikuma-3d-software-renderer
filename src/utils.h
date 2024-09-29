@@ -21,4 +21,9 @@ int imax(int a, int b);
 void rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b, float *h, float *s, float *v);
 void hsv_to_rgb(float h, float s, float v, uint8_t *r, uint8_t *g, uint8_t *b);
 
+#define PI 3.14159265358979323846
+
+double degrees_to_radians(double degrees);
+double radians_to_degrees(double radians);
+
 #endif // UTILS_H

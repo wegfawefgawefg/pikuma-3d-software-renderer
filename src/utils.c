@@ -1,3 +1,5 @@
+#include "utils.h"
+
 #include "primitives.h"
 #include "globals.h"
 #include "math.h"
@@ -112,4 +114,13 @@ void hsv_to_rgb(float h, float s, float v, uint8_t *r, uint8_t *g, uint8_t *b)
     *r = (uint8_t)((r_prime + m) * 255.0f);
     *g = (uint8_t)((g_prime + m) * 255.0f);
     *b = (uint8_t)((b_prime + m) * 255.0f);
+}
+
+double degrees_to_radians(double degrees)
+{
+    return degrees * (PI / 180.0);
+}
+double radians_to_degrees(double radians)
+{
+    return radians * (180.0 / PI);
 }

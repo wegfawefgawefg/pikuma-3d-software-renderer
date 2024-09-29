@@ -18,6 +18,7 @@ typedef struct
 {
     bool quit;
     MetaTriangle triangles[NUM_TRIANGLES];
+    uint selection;
 
 } State;
 

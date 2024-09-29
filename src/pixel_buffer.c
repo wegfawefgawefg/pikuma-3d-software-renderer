@@ -43,6 +43,31 @@ void set_pixel(PixelBuffer *pb, int x, int y, uint32_t color)
     pb->pixels[y * pb->width + x] = color;
 }
 
+void set_pixel_alpha(PixelBuffer *pb, int x, int y, uint32_t color)
+{
+    if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
+    {
+        return;
+    }
+    uint32_t bg_color = pb->pixels[y * pb->width + x];
+    uint8_t alpha = color & 0xFF;
+    if (alpha == 255)
+    {
+        // Fully opaque, just set the color
+        pb->pixels[y * pb->width + x] = color;
+    }
+    else if (alpha > 0)
+    {
+        // Perform alpha blending
+        uint8_t inv_alpha = 255 - alpha;
+        uint8_t r = ((color >> 24) & 0xFF) * alpha / 255 + ((bg_color >> 24) & 0xFF) * inv_alpha / 255;
+        uint8_t g = ((color >> 16) & 0xFF) * alpha / 255 + ((bg_color >> 16) & 0xFF) * inv_alpha / 255;
+        uint8_t b = ((color >> 8) & 0xFF) * alpha / 255 + ((bg_color >> 8) & 0xFF) * inv_alpha / 255;
+        pb->pixels[y * pb->width + x] = (r << 24) | (g << 16) | (b << 8) | alpha;
+    }
+    // If alpha is 0, do nothing (fully transparent)
+}
+
 uint32_t get_pixel(PixelBuffer *pb, int x, int y)
 {
     if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
