@@ -25,6 +25,7 @@ float vec3_dot(Vec3 a, Vec3 b);
 Vec3 vec3_cross(Vec3 a, Vec3 b);
 float vec3_length(Vec3 v);
 Vec3 vec3_normalize(Vec3 v);
+Vec3 vec3_rotate_point_around_axis(Vec3 point, Vec3 axis, float degrees);
 
 // IVec3 operations (integer)
 IVec3 ivec3_create(int x, int y, int z);

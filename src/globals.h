@@ -25,8 +25,8 @@
 #define GBA_LIGHT_X 369 * WINDOW_SCALE
 #define GBA_LIGHT_Y 24 * WINDOW_SCALE
 
-#define USE_GBA_BORDER true
-#define SHOW_FPS false
+#define USE_GBA_BORDER false
+#define SHOW_FPS true
 
 extern int WIDTH;
 extern int HEIGHT;

@@ -6,9 +6,20 @@
 PixelBuffer *create_pixel_buffer(int width, int height)
 {
     PixelBuffer *pb = (PixelBuffer *)malloc(sizeof(PixelBuffer));
+    if (!pb)
+    {
+        return NULL;
+    }
+
     pb->width = width;
     pb->height = height;
     pb->pixels = (uint32_t *)calloc(width * height, sizeof(uint32_t));
+    if (!pb->pixels)
+    {
+        free(pb);
+        return NULL;
+    }
+
     return pb;
 }
 
@@ -71,52 +82,90 @@ void fade_pixel_buffer(PixelBuffer *pb, uint8_t amount)
     }
 }
 
-// void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
-// {
-//     // determine the intersection bounds
-//     int x0 = x;
-//     int x1 = x + src->width;
-//     int y0 = y;
-//     int y1 = y + src->height;
-//     if (x0 < 0)
-//         x0 = 0;
-//     if (x1 > dst->width)
-//         x1 = dst->width;
-//     if (y0 < 0)
-//         y0 = 0;
-//     if (y1 > dst->height)
-//         y1 = dst->height;
+PixelBuffer *scale_pixelbuffer(PixelBuffer *src, Vec2 scale)
+{
+    if (!src || scale.x <= 0 || scale.y <= 0)
+        return NULL;
 
-//     for (int j = y0; j < y1; j++)
-//     {
-//         for (int i = x0; i < x1; i++)
-//         {
-//             uint32_t src_color = get_pixel(src, i - x, j - y);
-//             uint32_t dst_color = get_pixel(dst, i, j);
+    int new_width = (int)(src->width * scale.x);
+    int new_height = (int)(src->height * scale.y);
 
-//             // Extract color components and alpha
-//             uint8_t src_r = (src_color >> 16) & 0xFF;
-//             uint8_t src_g = (src_color >> 8) & 0xFF;
-//             uint8_t src_b = src_color & 0xFF;
-//             uint8_t src_a = (src_color >> 24) & 0xFF;
+    PixelBuffer *scaled = create_pixel_buffer(new_width, new_height);
+    if (!scaled)
+        return NULL; // Handle allocation failure
 
-//             uint8_t dst_r = (dst_color >> 16) & 0xFF;
-//             uint8_t dst_g = (dst_color >> 8) & 0xFF;
-//             uint8_t dst_b = dst_color & 0xFF;
+    for (int y = 0; y < new_height; y++)
+    {
+        for (int x = 0; x < new_width; x++)
+        {
+            int src_x = (int)(x / scale.x);
+            int src_y = (int)(y / scale.y);
 
-//             // Perform alpha blending
-//             float alpha = src_a / 255.0f;
-//             uint8_t r = (uint8_t)(src_r * alpha + dst_r * (1 - alpha));
-//             uint8_t g = (uint8_t)(src_g * alpha + dst_g * (1 - alpha));
-//             uint8_t b = (uint8_t)(src_b * alpha + dst_b * (1 - alpha));
+            // Ensure we don't go out of bounds
+            src_x = (src_x >= src->width) ? src->width - 1 : src_x;
+            src_y = (src_y >= src->height) ? src->height - 1 : src_y;
 
-//             // Combine the blended components
-//             uint32_t blended_color = (src_a << 24) | (r << 16) | (g << 8) | b;
+            uint32_t color = get_pixel(src, src_x, src_y);
+            set_pixel(scaled, x, y, color);
+        }
+    }
 
-//             set_pixel(dst, i, j, blended_color);
-//         }
-//     }
-// }
+    return scaled;
+}
+
+PixelBuffer *rotate_pixelbuffer(PixelBuffer *src, float degrees)
+{
+    // Calculate the center of the source image
+    float center_x = src->width / 2.0f;
+    float center_y = src->height / 2.0f;
+
+    // Convert degrees to radians
+    float radians = degrees * (M_PI / 180.0f);
+    float cos_r = cosf(radians);
+    float sin_r = sinf(radians);
+
+    // Calculate the dimensions of the rotated image
+    int w = src->width;
+    int h = src->height;
+    int max_dim = (int)ceil(sqrtf(w * w + h * h)) + 1;
+
+    // Create a new PixelBuffer for the rotated image
+    PixelBuffer *rotated = create_pixel_buffer(max_dim, max_dim);
+    if (!rotated)
+        return NULL; // Handle allocation failure
+
+    // Translate center to the middle of the new buffer
+    float translate_x = max_dim / 2.0f - center_x;
+    float translate_y = max_dim / 2.0f - center_y;
+
+    for (int y = 0; y < max_dim; y++)
+    {
+        for (int x = 0; x < max_dim; x++)
+        {
+            // Translate point to rotate around specified center
+            float dx = x - translate_x - center_x;
+            float dy = y - translate_y - center_y;
+
+            // Rotate the point
+            int sx = (int)roundf((dx * cos_r + dy * sin_r) + center_x);
+            int sy = (int)roundf((-dx * sin_r + dy * cos_r) + center_y);
+
+            // Check if the source pixel is within the bounds of the source image
+            if (sx >= 0 && sx < w && sy >= 0 && sy < h)
+            {
+                uint32_t color = get_pixel(src, sx, sy);
+                set_pixel(rotated, x, y, color);
+            }
+            else
+            {
+                // Set to transparent or background color if out of bounds
+                set_pixel(rotated, x, y, 0x00000000); // Assuming ARGB format
+            }
+        }
+    }
+
+    return rotated;
+}
 
 void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
 {
@@ -188,8 +237,24 @@ void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
     }
 }
 
-// blit_ex takes in a rotation angle and a center of rotation
-void blit_ex(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float angle, Vec2 center_of_rotation)
+void blit_with_scale(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale)
+{
+    if (!src || !dst || scale.x <= 0 || scale.y <= 0)
+        return;
+
+    // Create a temporary scaled buffer
+    PixelBuffer *scaled = scale_pixelbuffer(src, scale);
+    if (!scaled)
+        return; // Handle allocation failure
+
+    // Blit the scaled buffer onto the destination
+    blit(scaled, dst, pos.x, pos.y);
+
+    // Clean up
+    destroy_pixel_buffer(scaled);
+}
+
+void blit_with_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float angle, Vec2 center_of_rotation)
 {
     // rotate the buffer around its center
     PixelBuffer *rotated = rotate_pixelbuffer(src, angle);
@@ -198,7 +263,7 @@ void blit_ex(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float angle, Vec2 ce
     Vec2 new_center = ivec2_to_vec2(get_center_of_pixelbuffer(rotated));
 
     Vec2 old_target = center_of_rotation;
-    Vec2 new_target = rotate_point_around_pivot(old_target, old_center, angle);
+    Vec2 new_target = vec2_rotate_point_around_pivot(old_target, old_center, angle);
     Vec2 center_to_new_target = vec2_sub(new_target, old_center);
     Vec2 rotated_pos = vec2_sub(ivec2_to_vec2(pos), new_center);
     rotated_pos = vec2_sub(rotated_pos, center_to_new_target);
@@ -206,6 +271,84 @@ void blit_ex(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float angle, Vec2 ce
 
     destroy_pixel_buffer(rotated);
 }
+
+void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale, float angle, Vec2 center_of_rotation)
+{
+    if (!src || !dst || scale.x <= 0 || scale.y <= 0)
+        return;
+
+    // Scale first
+    PixelBuffer *scaled = scale_pixelbuffer(src, scale);
+    if (!scaled)
+        return; // Handle allocation failure
+
+    // Then rotate
+    PixelBuffer *rotated = rotate_pixelbuffer(scaled, angle);
+    destroy_pixel_buffer(scaled);
+    if (!rotated)
+        return; // Handle allocation failure
+
+    // Calculate new position
+    Vec2 old_center = ivec2_to_vec2(get_center_of_pixelbuffer(src));
+    Vec2 new_center = ivec2_to_vec2(get_center_of_pixelbuffer(rotated));
+    Vec2 old_target = center_of_rotation;
+    Vec2 new_target = vec2_rotate_point_around_pivot(old_target, old_center, angle);
+    Vec2 center_to_new_target = vec2_sub(new_target, old_center);
+    Vec2 rotated_pos = vec2_sub(ivec2_to_vec2(pos), new_center);
+    // without the scale, the position is correct, but we have to adjust the position now based on the scale
+    center_to_new_target = vec2_mul(center_to_new_target, scale);
+    Vec2 new_pos = vec2_sub(rotated_pos, center_to_new_target);
+
+    // Blit the rotated and scaled buffer onto the destination
+    blit(rotated, dst, new_pos.x, new_pos.y);
+
+    // Clean up
+    destroy_pixel_buffer(rotated);
+}
+
+// void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale, float angle, Vec2 pin)
+// {
+//     if (!src || !dst || scale.x <= 0 || scale.y <= 0)
+//         return;
+
+//     // Scale first
+//     PixelBuffer *scaled = scale_pixelbuffer(src, scale);
+//     if (!scaled)
+//         return; // Handle allocation failure
+
+//     // Then rotate
+//     PixelBuffer *rotated = rotate_pixelbuffer(scaled, angle);
+//     destroy_pixel_buffer(scaled);
+//     if (!rotated)
+//         return; // Handle allocation failure
+
+//     // Calculate the position of the pin in the original image
+//     Vec2 src_pin_offset = vec2_sub(pin, vec2_create(0, 0));
+
+//     // Calculate the position of the pin after scaling
+//     Vec2 scaled_pin_offset = vec2_mul(src_pin_offset, scale);
+
+//     // Rotate the scaled pin offset
+//     float cos_angle = cosf(angle * M_PI / 180.0f);
+//     float sin_angle = sinf(angle * M_PI / 180.0f);
+//     Vec2 rotated_pin_offset = {
+//         scaled_pin_offset.x * cos_angle - scaled_pin_offset.y * sin_angle,
+//         scaled_pin_offset.x * sin_angle + scaled_pin_offset.y * cos_angle};
+
+//     // Calculate the final position adjustment
+//     Vec2 position_adjustment = vec2_sub(src_pin_offset, rotated_pin_offset);
+
+//     // Calculate the final blitting position
+//     IVec2 final_pos = {
+//         pos.x + (int)roundf(position_adjustment.x),
+//         pos.y + (int)roundf(position_adjustment.y)};
+
+//     // Blit the rotated and scaled buffer onto the destination
+//     blit(rotated, dst, final_pos.x, final_pos.y);
+
+//     // Clean up
+//     destroy_pixel_buffer(rotated);
+// }
 
 void blit_dumb(PixelBuffer *src, PixelBuffer *dst, int x, int y)
 {
@@ -234,60 +377,6 @@ void blit_dumb(PixelBuffer *src, PixelBuffer *dst, int x, int y)
     }
 }
 
-PixelBuffer *rotate_pixelbuffer(PixelBuffer *src, float degrees)
-{
-    // Calculate the center of the source image
-    float center_x = src->width / 2.0f;
-    float center_y = src->height / 2.0f;
-
-    // Convert degrees to radians
-    float radians = degrees * (M_PI / 180.0f);
-    float cos_r = cosf(radians);
-    float sin_r = sinf(radians);
-
-    // Calculate the dimensions of the rotated image
-    int w = src->width;
-    int h = src->height;
-    int max_dim = (int)ceil(sqrtf(w * w + h * h)) + 1;
-
-    // Create a new PixelBuffer for the rotated image
-    PixelBuffer *rotated = create_pixel_buffer(max_dim, max_dim);
-    if (!rotated)
-        return NULL; // Handle allocation failure
-
-    // Translate center to the middle of the new buffer
-    float translate_x = max_dim / 2.0f - center_x;
-    float translate_y = max_dim / 2.0f - center_y;
-
-    for (int y = 0; y < max_dim; y++)
-    {
-        for (int x = 0; x < max_dim; x++)
-        {
-            // Translate point to rotate around specified center
-            float dx = x - translate_x - center_x;
-            float dy = y - translate_y - center_y;
-
-            // Rotate the point
-            int sx = (int)roundf((dx * cos_r + dy * sin_r) + center_x);
-            int sy = (int)roundf((-dx * sin_r + dy * cos_r) + center_y);
-
-            // Check if the source pixel is within the bounds of the source image
-            if (sx >= 0 && sx < w && sy >= 0 && sy < h)
-            {
-                uint32_t color = get_pixel(src, sx, sy);
-                set_pixel(rotated, x, y, color);
-            }
-            else
-            {
-                // Set to transparent or background color if out of bounds
-                set_pixel(rotated, x, y, 0x00000000); // Assuming ARGB format
-            }
-        }
-    }
-
-    return rotated;
-}
-
 void color_rotate(PixelBuffer *pb, float hue_shift)
 {
     for (int i = 0; i < pb->width * pb->height; i++)
@@ -313,7 +402,7 @@ void color_rotate(PixelBuffer *pb, float hue_shift)
     }
 }
 
-int load_png_into_pixelbuffer(const char *filename, PixelBuffer *buffer)
+PixelBuffer *load_pixelbuffer_from_png(const char *filename)
 {
     int width, height, channels;
     // Load the image using stb_image, expecting 4 channels (RGBA)
@@ -321,16 +410,15 @@ int load_png_into_pixelbuffer(const char *filename, PixelBuffer *buffer)
     if (!data)
     {
         printf("Failed to load image: %s\n", stbi_failure_reason());
-        return 1;
+        return NULL;
     }
 
-    // Ensure the buffer size matches the loaded image
-    if (width != buffer->width || height != buffer->height)
+    // allocate memory for the pixel buffer
+    PixelBuffer *buffer = create_pixel_buffer(width, height);
+    if (!buffer)
     {
-        printf("Image dimensions (%dx%d) do not match buffer dimensions (%dx%d)\n",
-               width, height, buffer->width, buffer->height);
         stbi_image_free(data);
-        return 1;
+        return NULL;
     }
 
     // Manually set each pixel in RGBA order
@@ -346,7 +434,7 @@ int load_png_into_pixelbuffer(const char *filename, PixelBuffer *buffer)
     }
 
     stbi_image_free(data);
-    return 0;
+    return buffer;
 }
 
 IVec2 calculate_new_top_left(PixelBuffer *src, float degrees, Vec2 center_of_rotation)

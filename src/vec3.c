@@ -55,6 +55,27 @@ Vec3 vec3_normalize(Vec3 v)
     return v;
 }
 
+// vec3 rotate point around pivot
+Vec3 vec3_rotate_point_around_axis(Vec3 point, Vec3 axis, float degrees)
+{
+    // Convert degrees to radians
+    float radians = degrees * (M_PI / 180.0f);
+    float cos_r = cosf(radians);
+    float sin_r = sinf(radians);
+
+    // Translate point to origin
+    float translated_x = point.x - axis.x;
+    float translated_y = point.y - axis.y;
+    float translated_z = point.z - axis.z;
+
+    // Rotate the point
+    float rotated_x = translated_x * cos_r - translated_y * sin_r;
+    float rotated_y = translated_x * sin_r + translated_y * cos_r;
+
+    // Translate back
+    return vec3_create(rotated_x + axis.x, rotated_y + axis.y, translated_z);
+}
+
 // IVec3 implementations (integer)
 IVec3 ivec3_create(int x, int y, int z)
 {

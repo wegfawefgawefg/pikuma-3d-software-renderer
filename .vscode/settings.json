@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "primitives.h": "c",
+        "assets.h": "c"
+    }
+}

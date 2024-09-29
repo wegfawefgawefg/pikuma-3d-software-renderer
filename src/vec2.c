@@ -17,7 +17,12 @@ Vec2 vec2_sub(Vec2 a, Vec2 b)
     return (Vec2){a.x - b.x, a.y - b.y};
 }
 
-Vec2 vec2_mul(Vec2 v, float scalar)
+Vec2 vec2_mul(Vec2 v, Vec2 w)
+{
+    return (Vec2){v.x * w.x, v.y * w.y};
+}
+
+Vec2 vec2_fmul(Vec2 v, float scalar)
 {
     return (Vec2){v.x * scalar, v.y * scalar};
 }
@@ -37,12 +42,12 @@ Vec2 vec2_normalize(Vec2 v)
     float len = vec2_length(v);
     if (len != 0)
     {
-        return vec2_mul(v, 1.0f / len);
+        return vec2_fmul(v, 1.0f / len);
     }
     return v;
 }
 
-Vec2 rotate_point_around_pivot(Vec2 point, Vec2 pivot, float degrees)
+Vec2 vec2_rotate_point_around_pivot(Vec2 point, Vec2 pivot, float degrees)
 {
     // Convert degrees to radians
     float radians = degrees * (M_PI / 180.0f);
@@ -91,7 +96,7 @@ IVec2 ivec2_sub(IVec2 a, IVec2 b)
     return (IVec2){a.x - b.x, a.y - b.y};
 }
 
-IVec2 ivec2_mul(IVec2 v, int scalar)
+IVec2 ivec2_fmul(IVec2 v, int scalar)
 {
     return (IVec2){v.x * scalar, v.y * scalar};
 }
