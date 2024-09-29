@@ -8,7 +8,7 @@
 #define RENDER_WIDTH 240 * RENDER_SCALE
 #define RENDER_HEIGHT 160 * RENDER_SCALE
 
-#define WINDOW_SCALE 3
+#define WINDOW_SCALE 2
 #define WINDOW_WIDTH 400 * WINDOW_SCALE
 #define WINDOW_HEIGHT 240 * WINDOW_SCALE
 
@@ -25,7 +25,7 @@
 #define GBA_LIGHT_X 369 * WINDOW_SCALE
 #define GBA_LIGHT_Y 24 * WINDOW_SCALE
 
-#define USE_GBA_BORDER false
+#define USE_GBA_BORDER true
 #define SHOW_FPS true
 
 extern int WIDTH;

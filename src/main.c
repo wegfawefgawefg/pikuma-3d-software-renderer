@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
 
         process_input(&state);
         step(&state);
-        clear_pixel_buffer(pixel_buffer, 0x00000000);
-        // fade_pixel_buffer(pixel_buffer, 1);
+        // clear_pixel_buffer(pixel_buffer, 0x00000000);
+        fade_pixel_buffer(pixel_buffer, 2);
         color_rotate(pixel_buffer, 10.0);
         draw(pixel_buffer, &state, assets);
 
