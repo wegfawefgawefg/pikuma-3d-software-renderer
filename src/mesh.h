@@ -13,16 +13,20 @@ typedef struct
 
 // Function to create and free Mesh
 Mesh *mesh_new(int vertex_length, int index_length);
+Mesh *mesh_copy(const Mesh *mesh);
 void mesh_free(Mesh *mesh);
+
+//////////////////////// PROCEDURAL PRIMITIVES ////////////////////////
+Mesh *mesh_prim_triangle(float size);
+Mesh *mesh_prim_cube(float size);
+Mesh *mesh_prim_tetrahedron(float size);
+Mesh *mesh_prim_rectangle(float width, float height);
 
 //////////////////////// MESH TRANSFORM FUNCTIONS ////////////////////////
 void mesh_rotate(Mesh *mesh, Vec3 rotation);
 void mesh_scale(Mesh *mesh, Vec3 scale);
 void mesh_translate(Mesh *mesh, Vec3 translation);
 
-//////////////////////// PROCEDURAL PRIMITIVES ////////////////////////
-Mesh *mesh_prim_triangle(float size);
-Mesh *mesh_prim_cube(float size);
-Mesh *mesh_prim_tetrahedron(float size);
+Vec3 mesh_get_center(const Mesh *mesh);
 
 #endif // MESH_H

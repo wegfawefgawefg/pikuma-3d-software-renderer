@@ -21,6 +21,7 @@ Vec2 vec2_mul(Vec2 a, Vec2 b);
 Vec2 vec2_fmul(Vec2 v, float scalar);
 float vec2_dot(Vec2 a, Vec2 b);
 float vec2_length(Vec2 v);
+float vec2_distance(Vec2 a, Vec2 b);
 Vec2 vec2_normalize(Vec2 v);
 Vec2 vec2_rotate_point_around_pivot(Vec2 point, Vec2 pivot, float degrees);
 IVec2 vec2_to_ivec2(Vec2 v);

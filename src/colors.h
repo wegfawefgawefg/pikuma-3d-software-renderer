@@ -2,6 +2,7 @@
 #define COLORS_H
 
 #include <stdint.h>
+#include "vec3.h"
 
 // Basic colors
 #define COLOR_BLACK 0x000000FF
@@ -58,5 +59,7 @@ uint32_t set_alpha(uint32_t color, uint8_t alpha);
 uint32_t add_colors(uint32_t color_a, uint32_t color_b);
 uint32_t blend_colors(uint32_t color_a, uint32_t color_b);
 uint32_t color_fmul(uint32_t color, float scalar);
+Vec3 color_to_vec3(uint32_t color);
+uint32_t vec3_to_color(Vec3 v);
 
 #endif // COLORS_H

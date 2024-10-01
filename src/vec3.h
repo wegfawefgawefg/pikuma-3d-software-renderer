@@ -25,6 +25,7 @@ Vec3 vec3_div(Vec3 v, float scalar);
 float vec3_dot(Vec3 a, Vec3 b);
 Vec3 vec3_cross(Vec3 a, Vec3 b);
 float vec3_length(Vec3 v);
+float vec3_distance(Vec3 a, Vec3 b);
 Vec3 vec3_normalize(Vec3 v);
 Vec3 vec3_rotate_point(Vec3 point, Vec3 center, Vec3 rotation);
 

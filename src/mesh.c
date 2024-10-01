@@ -222,6 +222,52 @@ Mesh *mesh_prim_tetrahedron(float size)
     return mesh;
 }
 
+// Function to create a rectangular mesh centered at the origin in the XY plane
+Mesh *mesh_prim_rectangle(float width, float height)
+{
+    // Number of vertices and indices for a rectangle
+    const int num_vertices = 4;
+    const int num_indices = 6; // 2 triangles * 3 indices each
+
+    // Allocate a new Mesh with space for vertices and indices
+    Mesh *mesh = mesh_new(num_vertices * 3, num_indices);
+    if (!mesh)
+    {
+        // Handle allocation failure
+        return NULL;
+    }
+
+    // Calculate half dimensions
+    float half_width = width / 2.0f;
+    float half_height = height / 2.0f;
+
+    // Define the 4 vertices of the rectangle in the XY plane (Z = 0)
+    float vertices[] = {
+        // Vertex 0: Bottom-left
+        -half_width, -half_height, 0.0f,
+        // Vertex 1: Bottom-right
+        half_width, -half_height, 0.0f,
+        // Vertex 2: Top-right
+        half_width, half_height, 0.0f,
+        // Vertex 3: Top-left
+        -half_width, half_height, 0.0f};
+
+    // Copy vertex data into the mesh
+    memcpy(mesh->vertices->data, vertices, sizeof(vertices));
+
+    // Define the 6 indices for the two triangles
+    unsigned int indices[] = {
+        // Triangle 1
+        0, 1, 2,
+        // Triangle 2
+        2, 3, 0};
+
+    // Copy index data into the mesh
+    memcpy(mesh->indices->data, indices, sizeof(indices));
+
+    return mesh;
+}
+
 //////////////////////// MESH TRANSFORM FUNCTIONS ////////////////////////
 // Function to rotate the mesh by the given Euler angles (in degrees)
 void mesh_rotate(Mesh *mesh, Vec3 rotation)
@@ -303,4 +349,50 @@ void mesh_translate(Mesh *mesh, Vec3 translation)
         mesh->vertices->data[i + 1] += translation.y; // Translate Y
         mesh->vertices->data[i + 2] += translation.z; // Translate Z
     }
+}
+
+Vec3 mesh_get_center(const Mesh *mesh)
+{
+    Vec3 center = {0.0f, 0.0f, 0.0f};
+
+    if (!mesh || !mesh->vertices || !mesh->vertices->data)
+    {
+        return center; // Handle invalid mesh
+    }
+
+    // Calculate the center of the mesh by averaging all vertices
+    for (int i = 0; i < mesh->vertices->length; i += 3)
+    {
+        center.x += mesh->vertices->data[i];
+        center.y += mesh->vertices->data[i + 1];
+        center.z += mesh->vertices->data[i + 2];
+    }
+
+    center.x /= mesh->vertices->length / 3;
+    center.y /= mesh->vertices->length / 3;
+    center.z /= mesh->vertices->length / 3;
+
+    return center;
+}
+
+// Function to create a deep copy of the given mesh
+Mesh *mesh_copy(const Mesh *mesh)
+{
+    if (!mesh)
+    {
+        return NULL; // Handle invalid mesh
+    }
+
+    // Create a new mesh with the same number of vertices and indices
+    Mesh *copy = mesh_new(mesh->vertices->length, mesh->indices->length);
+    if (!copy)
+    {
+        return NULL; // Handle allocation failure
+    }
+
+    // Copy vertex and index data
+    memcpy(copy->vertices->data, mesh->vertices->data, mesh->vertices->length * sizeof(float));
+    memcpy(copy->indices->data, mesh->indices->data, mesh->indices->length * sizeof(int));
+
+    return copy;
 }

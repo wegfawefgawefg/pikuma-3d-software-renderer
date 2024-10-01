@@ -1,5 +1,8 @@
 #include "colors.h"
+
 #include <stdint.h>
+
+#include "vec3.h"
 
 uint32_t from_rgb(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -83,4 +86,27 @@ uint32_t blend_colors(uint32_t color_a, uint32_t color_b)
     b = (b + 127) / 255;
 
     return (r << 24) | (g << 16) | (b << 8) | a;
+}
+
+Vec3 color_to_vec3(uint32_t color)
+{
+    return vec3_create(
+        (float)((color >> 24) & 0xFF) / 255.0f,
+        (float)((color >> 16) & 0xFF) / 255.0f,
+        (float)((color >> 8) & 0xFF) / 255.0f);
+}
+
+uint32_t vec3_to_color(Vec3 v)
+{
+    // dont forget to clamp values between 0 and 255
+    int x = (int)(v.x * 255);
+    x = x < 0 ? 0 : x > 255 ? 255
+                            : x;
+    int y = (int)(v.y * 255);
+    y = y < 0 ? 0 : y > 255 ? 255
+                            : y;
+    int z = (int)(v.z * 255);
+    z = z < 0 ? 0 : z > 255 ? 255
+                            : z;
+    return from_rgb(x, y, z);
 }

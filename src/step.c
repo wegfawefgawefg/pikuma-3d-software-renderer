@@ -19,21 +19,9 @@ void point_reverse_on_walls(Vec2 *point, Vec2 *velocity)
     }
 }
 
-void step_meta_triangle(MetaTriangle *mt)
-{
-    step_point(&mt->t.p1, &mt->vel.p1);
-    step_point(&mt->t.p2, &mt->vel.p2);
-    step_point(&mt->t.p3, &mt->vel.p3);
-
-    point_reverse_on_walls(&mt->t.p1, &mt->vel.p1);
-    point_reverse_on_walls(&mt->t.p2, &mt->vel.p2);
-    point_reverse_on_walls(&mt->t.p3, &mt->vel.p3);
-}
-
 void step(State *state)
 {
-    // for (int i = 0; i < NUM_TRIANGLES; i++)
-    // {
-    //     step_meta_triangle(&state->triangles[i]);
-    // }
+    // drop ripple center by 0.02 each frame
+    // clamp to 0
+    state->ripple_magnitude = fmax(0, state->ripple_magnitude - 0.02);
 }

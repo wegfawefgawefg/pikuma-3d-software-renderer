@@ -52,15 +52,70 @@ void process_input(State *state)
                 state->quit = true;
             }
 
-            // if left arrow, decrease selection by one if greater than 0 else 0
+            // use arrow keys to move camera x and y
             if (event.key.keysym.sym == SDLK_LEFT)
             {
-                state->selection = state->selection > 0 ? state->selection - 1 : 0;
+                state->camera_pos.x -= state->scale;
             }
-            // if right arrow, increase selection by 1 until 2
             if (event.key.keysym.sym == SDLK_RIGHT)
             {
-                state->selection = state->selection < 2 ? state->selection + 1 : 2;
+                state->camera_pos.x += state->scale;
+            }
+            if (event.key.keysym.sym == SDLK_UP)
+            {
+                state->camera_pos.z -= state->scale;
+            }
+            if (event.key.keysym.sym == SDLK_DOWN)
+            {
+                state->camera_pos.z += state->scale;
+            }
+
+            // scale up and down from 0.2 to 50 with mouse scroll
+            float scale_speed = 1.0;
+            if (event.key.keysym.sym == SDLK_EQUALS || event.key.keysym.sym == SDLK_KP_PLUS)
+            {
+                state->scale += scale_speed;
+            }
+            if (event.key.keysym.sym == SDLK_MINUS || event.key.keysym.sym == SDLK_KP_MINUS)
+            {
+                state->scale -= scale_speed;
+            }
+            // clamp using min and max
+            state->scale = fmax(1.0, fmin(50, state->scale));
+
+            // print camera position
+            printf("camera pos: %f, %f, %f\n", state->camera_pos.x, state->camera_pos.y, state->camera_pos.z);
+
+            // wasd to move pointer on x and z
+            if (event.key.keysym.sym == SDLK_a)
+            {
+                state->pointer_pos.x -= 1;
+            }
+            if (event.key.keysym.sym == SDLK_d)
+            {
+                state->pointer_pos.x += 1;
+            }
+            if (event.key.keysym.sym == SDLK_w)
+            {
+                state->pointer_pos.y -= 1;
+            }
+            if (event.key.keysym.sym == SDLK_s)
+            {
+                state->pointer_pos.y += 1;
+            }
+
+            // clamp between 0 and 10
+            state->pointer_pos.x = fmax(0, fmin(9, state->pointer_pos.x));
+            state->pointer_pos.y = fmax(0, fmin(9, state->pointer_pos.y));
+
+            // if press space, ripple center is set to pointer pos
+            if (event.key.keysym.sym == SDLK_SPACE)
+            {
+                state->ripple_center = state->pointer_pos;
+                state->ripple_magnitude = 1.0;
+
+                // print ripple center
+                printf("ripple center: %f, %f\n", state->ripple_center.x, state->ripple_center.y);
             }
 
             break;

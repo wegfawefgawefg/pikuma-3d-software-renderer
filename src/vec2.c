@@ -37,6 +37,11 @@ float vec2_length(Vec2 v)
     return sqrtf(v.x * v.x + v.y * v.y);
 }
 
+float vec2_distance(Vec2 a, Vec2 b)
+{
+    return vec2_length(vec2_sub(a, b));
+}
+
 Vec2 vec2_normalize(Vec2 v)
 {
     float len = vec2_length(v);

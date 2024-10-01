@@ -7,18 +7,15 @@
 
 typedef struct
 {
-    Triangle t;
-    Triangle vel;
-    uint32_t color;
-} MetaTriangle;
-
-#define NUM_TRIANGLES 4
-
-typedef struct
-{
     bool quit;
-    MetaTriangle triangles[NUM_TRIANGLES];
-    uint selection;
+
+    Vec3 camera_pos;
+    float scale;
+
+    Vec2 pointer_pos;
+
+    Vec2 ripple_center;
+    float ripple_magnitude;
 
 } State;
 
