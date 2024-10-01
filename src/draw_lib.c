@@ -206,3 +206,39 @@ void draw_ortho_quad(PixelBuffer *pb, Quad *quad, uint32_t color)
     draw_triangle(pb, t1, color);
     draw_triangle(pb, t2, color);
 }
+
+// in this case the SFA is 2d verticies: x,y,x,y
+void draw_tris(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
+        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
+        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+
+        Triangle t = {p1, p2, p3};
+        draw_triangle(pb, t, color);
+    }
+}
+
+// in this case the SFA is 2d verticies: x,y,x,y
+void draw_tris_lines(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
+        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
+        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+
+        Triangle t = {p1, p2, p3};
+        draw_triangle_lines(pb, t, color);
+    }
+}
