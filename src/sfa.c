@@ -90,3 +90,56 @@ SFA *sfa_orthographic_project(const SFA *sfa)
 
     return projected;
 }
+
+// Define the isometric projection matrix components
+#define ISO_ANGLE_X (35.264f * (M_PI / 180.0f)) // Convert degrees to radians
+#define ISO_ANGLE_Y (45.0f * (M_PI / 180.0f))
+
+SFA *sfa_isometric_project(const SFA *sfa)
+{
+    if (sfa->length % 3 != 0)
+    {
+        // Invalid input length; must be a multiple of 3
+        return NULL;
+    }
+
+    int num_vertices = sfa->length / 3;
+    // Each vertex will be projected to 2D, so total length is num_vertices * 2
+    SFA *projected = sfa_new(num_vertices * 2);
+    if (!projected)
+    {
+        return NULL;
+    }
+
+    // Precompute sine and cosine of rotation angles
+    float cos_x = cosf(ISO_ANGLE_X);
+    float sin_x = sinf(ISO_ANGLE_X);
+    float cos_y = cosf(ISO_ANGLE_Y);
+    float sin_y = sinf(ISO_ANGLE_Y);
+
+    // Combined projection matrix elements
+    float m00 = cos_y;
+    float m01 = 0;
+    float m02 = -sin_y;
+
+    float m10 = sin_x * sin_y;
+    float m11 = cos_x;
+    float m12 = sin_x * cos_y;
+
+    for (int i = 0, j = 0; i < sfa->length; i += 3, j += 2)
+    {
+        // Original coordinates
+        float x = sfa->data[i];
+        float y = sfa->data[i + 1];
+        float z = sfa->data[i + 2];
+
+        // Apply the combined isometric projection matrix
+        float x_proj = x * m00 + y * m01 + z * m02;
+        float y_proj = x * m10 + y * m11 + z * m12;
+
+        projected->data[j] = x_proj;
+        projected->data[j + 1] = y_proj;
+    }
+
+    return projected;
+}

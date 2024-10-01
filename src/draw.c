@@ -32,13 +32,13 @@ void draw(PixelBuffer *pb, State *state, Assets *assets)
     // move it to the center of the screen
     Vec3 translation = vec3_create(pb->width / 2, pb->height / 2, 20);
     mesh_translate(mesh, translation);
-    // project to isometric
-    // project to orthographic
-    SFA *ortho_projected_shape = sfa_orthographic_project(mesh->vertices);
+    // project
+    SFA *projected_shape = sfa_orthographic_project(mesh->vertices);
+    // SFA *projected_shape = sfa_isometric_project(mesh->vertices);
 
     // draw it
-    draw_tris_lines(pb, ortho_projected_shape, mesh->indices, COLOR_WHITE);
+    draw_tris_lines(pb, projected_shape, mesh->indices, COLOR_WHITE);
 
-    sfa_free(ortho_projected_shape);
+    sfa_free(projected_shape);
     mesh_free(mesh);
 }

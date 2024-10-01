@@ -29,7 +29,7 @@ void sfa_rotate(SFA *sfa, Vec3 rotation);
 void sfa_scale(SFA *sfa, Vec3 scale);
 void sfa_translate(SFA *sfa, Vec3 translation);
 
-// SFA *sfa_isometric_project(const SFA *sfa);
 SFA *sfa_orthographic_project(const SFA *sfa);
+SFA *sfa_isometric_project(const SFA *sfa);
 
 #endif // SFA_H
