@@ -2,6 +2,7 @@
 #define MESH_H
 
 #include "sfa.h"
+#include "mat4.h"
 
 //////////////////////// PRIMITIVES ////////////////////////
 // MESH: Combined Vertex and Index Data
@@ -26,6 +27,7 @@ Mesh *mesh_prim_rectangle(float width, float height);
 void mesh_rotate(Mesh *mesh, Vec3 rotation);
 void mesh_scale(Mesh *mesh, Vec3 scale);
 void mesh_translate(Mesh *mesh, Vec3 translation);
+void mesh_transform(Mesh *mesh, Mat4 transform);
 
 Vec3 mesh_get_center(const Mesh *mesh);
 

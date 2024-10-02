@@ -18,6 +18,7 @@ void draw_checkerboard(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uin
 void draw_cursor(PixelBuffer *pb, int x, int y, int size, uint32_t color);
 
 //////////////////////// DRAW SFA FUNCTIONS ////////////////////////
+void draw_points(PixelBuffer *pb, SFA *points, uint32_t color);
 void draw_tris(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color);
 void draw_tris_lines(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color);
 

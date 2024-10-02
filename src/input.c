@@ -84,7 +84,6 @@ void process_input(State *state)
             state->scale = fmax(1.0, fmin(50, state->scale));
 
             // print camera position
-            printf("camera pos: %f, %f, %f\n", state->camera_pos.x, state->camera_pos.y, state->camera_pos.z);
 
             // wasd to move pointer on x and z
             if (event.key.keysym.sym == SDLK_a)

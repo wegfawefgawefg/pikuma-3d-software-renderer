@@ -207,6 +207,17 @@ void draw_ortho_quad(PixelBuffer *pb, Quad *quad, uint32_t color)
     draw_triangle(pb, t2, color);
 }
 
+// in this case the SFA is 2d verticies: x,y
+void draw_points(PixelBuffer *pb, SFA *points, uint32_t color)
+{
+    for (int i = 0; i < points->length; i += 2)
+    {
+        int x = points->data[i];
+        int y = points->data[i + 1];
+        set_pixel(pb, x, y, color);
+    }
+}
+
 // in this case the SFA is 2d verticies: x,y,x,y
 void draw_tris(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color)
 {

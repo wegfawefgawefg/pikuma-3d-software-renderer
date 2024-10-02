@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "utils.h"
 #include "mesh.h"
+#include "utils.h"
+#include "mat4.h"
 
 // Create a new Mesh
 Mesh *mesh_new(int vertex_length, int index_length)
@@ -395,4 +396,24 @@ Mesh *mesh_copy(const Mesh *mesh)
     memcpy(copy->indices->data, mesh->indices->data, mesh->indices->length * sizeof(int));
 
     return copy;
+}
+
+// mesh_transform, takes in a mesh and a transformation mat4 and applies it
+void mesh_transform(Mesh *mesh, Mat4 transform)
+{
+    if (!mesh || !mesh->vertices || !mesh->vertices->data)
+    {
+        return; // Handle invalid mesh
+    }
+
+    // Iterate over each vertex and apply transformation
+    for (int i = 0; i < mesh->vertices->length; i += 3)
+    {
+        Vec3 vertex = {mesh->vertices->data[i], mesh->vertices->data[i + 1], mesh->vertices->data[i + 2]};
+        Vec3 transformed = mat4_multiply_vec3(transform, vertex);
+
+        mesh->vertices->data[i] = transformed.x;
+        mesh->vertices->data[i + 1] = transformed.y;
+        mesh->vertices->data[i + 2] = transformed.z;
+    }
 }
