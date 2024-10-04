@@ -3,6 +3,7 @@
 
 #include "sfa.h"
 #include "mat4.h"
+#include "su32a.h"
 
 //////////////////////// PRIMITIVES ////////////////////////
 // MESH: Combined Vertex and Index Data
@@ -10,6 +11,7 @@ typedef struct
 {
     SFA *vertices; // Vertex data
     SIA *indices;  // Index data
+    SU32A *colors; // Color data
 } Mesh;
 
 // Function to create and free Mesh

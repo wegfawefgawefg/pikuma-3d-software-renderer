@@ -463,3 +463,56 @@ IVec2 get_center_of_pixelbuffer(PixelBuffer *pb)
 {
     return ivec2_create(pb->width / 2, pb->height / 2);
 }
+
+void blit_string(PixelBuffer *target_pb, PixelBuffer *letters_pb, const char *str, int x, int y, int size, uint32_t color)
+{
+    int x_pos = x;
+    int len = strlen(str);
+    for (int i = 0; i < len; i++)
+    {
+        blit_letter(target_pb, letters_pb, str[i], x_pos, y, size, color);
+        x_pos += size * 7; // 7 is the width of each character
+    }
+}
+
+void blit_letter(PixelBuffer *target_pb, PixelBuffer *letters_pb, uint8_t ascii_value, int x, int y, int size, uint32_t color)
+{
+    // Constants for character dimensions and layout in charmap
+    const int char_width = 7;
+    const int char_height = 9;
+    const int chars_per_row = 18;
+
+    // Calculate the row and column in the charmap based on ASCII value
+    int char_index = ascii_value - 32; // 32 is the ASCII value for space
+    int src_col = char_index % chars_per_row;
+    int src_row = char_index / chars_per_row;
+
+    // Calculate the starting position of the character in the charmap
+    int src_x = src_col * char_width;
+    int src_y = src_row * char_height;
+
+    // Blit the character to the target pixel buffer, scaling it if necessary
+    for (int cy = 0; cy < char_height; cy++)
+    {
+        for (int cx = 0; cx < char_width; cx++)
+        {
+            // Get the color from the source (letters) pixel buffer
+            uint32_t sample_color = get_pixel(letters_pb, src_x + cx, src_y + cy);
+
+            // Only copy non-transparent pixels (assuming black is transparent in charmap)
+            if (sample_color != 0x000000FF)
+            {
+                // Blit the pixel to the target, scaling it if necessary
+                for (int sy = 0; sy < size; sy++)
+                {
+                    for (int sx = 0; sx < size; sx++)
+                    {
+                        int target_x = x + (cx * size) + sx;
+                        int target_y = y + (cy * size) + sy;
+                        set_pixel(target_pb, target_x, target_y, color);
+                    }
+                }
+            }
+        }
+    }
+}

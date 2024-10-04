@@ -236,6 +236,69 @@ void draw_tris(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color)
     }
 }
 
+void draw_tris_with_colors(PixelBuffer *pb, SFA *verticies, SIA *indices, SU32A *colors)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
+        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
+        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+
+        Triangle t = {p1, p2, p3};
+        uint32_t color = colors->data[i / 3];
+
+        // print the color
+        draw_triangle(pb, t, color);
+    }
+}
+
+// // in the center of each try in red just draw the face index
+void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *verticies, SIA *indices, uint32_t size, uint32_t color)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
+        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
+        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+
+        Vec2 center = vec2_create((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3);
+        char face_number[10];
+        sprintf(face_number, "%d", i / 3);
+        blit_string(pb, charmap, face_number, center.x, center.y, size, color);
+    }
+}
+
+void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *verticies, SIA *indices, SU32A *colors, uint32_t size, uint32_t color)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
+        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
+        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+
+        Triangle t = {p1, p2, p3};
+        uint32_t face_color = colors->data[i / 3];
+        draw_triangle(pb, t, face_color);
+
+        Vec2 center = vec2_create((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3);
+        char face_number[10];
+        sprintf(face_number, "%d", i / 3);
+        blit_string(pb, charmap, face_number, center.x, center.y, size, color);
+    }
+}
+
 // in this case the SFA is 2d verticies: x,y,x,y
 void draw_tris_lines(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color)
 {

@@ -12,7 +12,7 @@ State *new_state(void)
 
     state->quit = false;
     state->scale = 10.0f;
-    state->camera_pos = vec3_create(176, 0, 8);
+    state->camera_pos = vec3_create(176 * RENDER_SCALE, 0, 8 * RENDER_SCALE);
 
     state->pointer_pos = vec2_create(0, 0);
 

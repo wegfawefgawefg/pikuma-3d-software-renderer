@@ -1,5 +1,6 @@
 #include <math.h>
 
+#include "globals.h"
 #include "draw.h"
 #include "draw_lib.h"
 #include "primitives.h"
@@ -58,11 +59,15 @@ void draw(PixelBuffer *pb, State *state, Assets *assets)
         // rotate based on time
         // translate based on camera position
         {
-            float scalef = 20.0;
+            float scalef = 20.0 * RENDER_SCALE;
             float time = SDL_GetTicks() / 1000.0f;
             float angle = time * 0.5f;
             Mat4 rotation = mat4_rotate(angle, vec3_create(0.0f, 1.0f, 0.0f));
-            Mat4 translation = mat4_translate(vec3_create(state->camera_pos.x, state->camera_pos.y, state->camera_pos.z));
+            Mat4 translation = mat4_translate(
+                vec3_create(
+                    state->camera_pos.x,
+                    state->camera_pos.y,
+                    state->camera_pos.z));
             Mat4 scale = mat4_scale(vec3_create(scalef, scalef, scalef));
             Mat4 model = mat4_multiply(translation, rotation);
             model = mat4_multiply(model, scale);
@@ -72,10 +77,27 @@ void draw(PixelBuffer *pb, State *state, Assets *assets)
             SFA *projected_mesh = sfa_isometric_project(gba_mesh->vertices);
             // draw_tris(pb, projected_mesh, gba_mesh->indices, 0xFFFFFFFF);
             // draw_points(pb, projected_mesh, 0xFF0000FF);
-            draw_tris_lines(pb, projected_mesh, gba_mesh->indices, 0xFFFFFFFF);
+            // draw_tris_with_colors(pb, projected_mesh, gba_mesh->indices, gba_mesh->colors);
+            // draw_tris_face_numbers(pb, assets->charmap_white, projected_mesh, gba_mesh->indices, 1, 0xFF0000FF);
+            draw_tris_with_colors_and_face_numbers(pb, assets->charmap_white, projected_mesh, gba_mesh->indices, gba_mesh->colors, 1, 0xFF0000FF);
 
             sfa_free(projected_mesh);
             mesh_free(gba_mesh);
+        }
+
+        // at the middle of the screen, draw the time in frames from sdl time
+        {
+            char time_str[64];
+            sprintf(time_str, "Time: %d", SDL_GetTicks());
+            int size = 4;
+            blit_string(pb, assets->charmap_white, time_str, pb->width / 4, pb->height / 2, size, COLOR_NEON_RED);
+        }
+
+        // draw the abcs at the bottom of the screen
+        {
+            char abc_str[64];
+            sprintf(abc_str, "abcdefghijklmnopqrstuvwxyz");
+            blit_string(pb, assets->charmap_white, abc_str, 0, pb->height * 3 / 4, 4, COLOR_NEON_GREEN);
         }
     }
 }

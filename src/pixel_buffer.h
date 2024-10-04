@@ -32,6 +32,8 @@ void blit_with_scale(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale);
 void blit_with_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float angle, Vec2 center_of_rotation);
 void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale, float angle, Vec2 center_of_rotation);
 void blit_dumb(PixelBuffer *src, PixelBuffer *dst, int x, int y);
+void blit_letter(PixelBuffer *target_pb, PixelBuffer *letters_pb, uint8_t ascii_value, int x, int y, int size, uint32_t color);
+void blit_string(PixelBuffer *target_pb, PixelBuffer *letters_pb, const char *str, int x, int y, int size, uint32_t color);
 
 IVec2 calculate_new_top_left(PixelBuffer *src, float degrees, Vec2 center_of_rotation);
 void color_rotate(PixelBuffer *pb, float hue_shift);

@@ -27,6 +27,21 @@ Mesh *mesh_new(int vertex_length, int index_length)
         return NULL;
     }
 
+    int num_faces = index_length / 3;
+    // if index_length is zero set num_faces to 0
+    if (index_length == 0)
+    {
+        num_faces = 0;
+    }
+    mesh->colors = su32a_new(num_faces);
+    if (!mesh->colors)
+    {
+        sfa_free(mesh->vertices);
+        sia_free(mesh->indices);
+        free(mesh);
+        return NULL;
+    }
+
     return mesh;
 }
 
@@ -38,6 +53,7 @@ void mesh_free(Mesh *mesh)
 
     sfa_free(mesh->vertices);
     sia_free(mesh->indices);
+    su32a_free(mesh->colors);
     free(mesh);
 }
 
@@ -394,6 +410,7 @@ Mesh *mesh_copy(const Mesh *mesh)
     // Copy vertex and index data
     memcpy(copy->vertices->data, mesh->vertices->data, mesh->vertices->length * sizeof(float));
     memcpy(copy->indices->data, mesh->indices->data, mesh->indices->length * sizeof(int));
+    memcpy(copy->colors->data, mesh->colors->data, mesh->colors->length * sizeof(uint32_t));
 
     return copy;
 }

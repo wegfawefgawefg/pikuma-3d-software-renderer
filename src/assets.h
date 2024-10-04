@@ -29,6 +29,7 @@ typedef struct
     SizedSDLTexture *pointer_sized_sdl_texture;
     Mesh *gba_mesh;
     PixelBuffer *pointer_pixel_buffer;
+    PixelBuffer *charmap_white;
 } Assets;
 
 Assets *load_assets(SDL_Renderer *renderer);
