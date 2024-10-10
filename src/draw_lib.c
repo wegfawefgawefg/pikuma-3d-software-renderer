@@ -38,6 +38,18 @@ void draw_line(PixelBuffer *pb, int x0, int y0, int x1, int y1, uint32_t color)
     }
 }
 
+void draw_lines(PixelBuffer *pb, SFA *points, uint32_t color)
+{
+    for (int i = 0; i < points->length; i += 2)
+    {
+        int x0 = (int)points->data[i];
+        int y0 = (int)points->data[i + 1];
+        int x1 = (int)points->data[i + 2];
+        int y1 = (int)points->data[i + 3];
+        draw_line(pb, x0, y0, x1, y1, color);
+    }
+}
+
 void draw_rect(PixelBuffer *pb, int x, int y, int w, int h, uint32_t color)
 {
     for (int i = x; i < x + w; i++)
@@ -124,6 +136,13 @@ void draw_cursor(PixelBuffer *pb, int x, int y, int size, uint32_t color)
 {
     draw_line(pb, x - size, y, x + size, y, color);
     draw_line(pb, x, y - size, x, y + size, color);
+}
+
+void draw_arrow(PixelBuffer *pb, int x, int y, int size, uint32_t color)
+{
+    draw_line(pb, x, y, x + size, y, color);
+    draw_line(pb, x + size, y, x + size - size / 4, y - size / 4, color);
+    draw_line(pb, x + size, y, x + size - size / 4, y + size / 4, color);
 }
 
 void draw_grid(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32_t color)

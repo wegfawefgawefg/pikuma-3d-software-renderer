@@ -63,11 +63,11 @@ void process_input(State *state)
             }
             if (event.key.keysym.sym == SDLK_UP)
             {
-                state->camera_pos.z -= state->scale;
+                state->camera_pos.y += state->scale;
             }
             if (event.key.keysym.sym == SDLK_DOWN)
             {
-                state->camera_pos.z += state->scale;
+                state->camera_pos.y -= state->scale;
             }
 
             // scale up and down from 0.2 to 50 with mouse scroll

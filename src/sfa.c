@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include "vec3.h"
+#include "vec4.h"
+#include "mat4.h"
 
 SFA *sfa_new(int length)
 {
@@ -73,7 +75,7 @@ void sfa_translate(SFA *sfa, Vec3 translation)
 }
 
 // Orthographic projection onto the XY-plane
-SFA *sfa_orthographic_project(const SFA *sfa)
+SFA *sfa_orthographic_projection_xy(const SFA *sfa)
 {
     // new sfa will only be xyxy, but passed in one was xyzxyz
     SFA *projected = sfa_new(sfa->length / 3 * 2);
@@ -95,7 +97,7 @@ SFA *sfa_orthographic_project(const SFA *sfa)
 #define ISO_ANGLE_X (35.264f * (M_PI / 180.0f)) // Convert degrees to radians
 #define ISO_ANGLE_Y (45.0f * (M_PI / 180.0f))
 
-SFA *sfa_isometric_project(const SFA *sfa)
+SFA *sfa_isometric_projection(const SFA *sfa)
 {
     if (sfa->length % 3 != 0)
     {
@@ -142,4 +144,68 @@ SFA *sfa_isometric_project(const SFA *sfa)
     }
 
     return projected;
+}
+
+// Applies mvp matrix transformation to input_sfa: (x,y,z) => (x,y,z,1) => (x',y',z',w')
+SFA *sfa_transform_vertices(const SFA *input_sfa, const Mat4 *mvp)
+{
+    if (!input_sfa || !mvp)
+        return NULL;
+
+    int vertex_count = input_sfa->length / 3;
+    SFA *transformed_sfa = sfa_new(vertex_count * 4); // Store as vec4 (homogeneous coordinates)
+
+    if (!transformed_sfa)
+    {
+        // Handle memory allocation failure
+        return NULL;
+    }
+
+    for (int i = 0; i < vertex_count; i++)
+    {
+        // Original vertex
+        Vec3 original = {
+            input_sfa->data[i * 3 + 0],
+            input_sfa->data[i * 3 + 1],
+            input_sfa->data[i * 3 + 2]};
+
+        // Convert to Vec4 (homogeneous coordinates)
+        Vec4 vertex = {original.x, original.y, original.z, 1.0f};
+
+        // Apply MVP transformation
+        Vec4 transformed = mat4_multiply_vec4(*mvp, vertex);
+
+        // Store transformed vertex
+        transformed_sfa->data[i * 4 + 0] = transformed.x;
+        transformed_sfa->data[i * 4 + 1] = transformed.y;
+        transformed_sfa->data[i * 4 + 2] = transformed.z;
+        transformed_sfa->data[i * 4 + 3] = transformed.w;
+    }
+
+    return transformed_sfa;
+}
+
+// Function to create an arrow along the X-axis
+SFA *create_x_axis_arrow(void)
+{
+    // Two points: origin and (1, 0, 0)
+    SFA *arrow_sfa = sfa_new(6); // 2 vertices * 3 components each
+
+    if (!arrow_sfa)
+    {
+        // Handle memory allocation failure
+        return NULL;
+    }
+
+    // Vertex 1: Origin
+    arrow_sfa->data[0] = 0.0f; // x0
+    arrow_sfa->data[1] = 0.0f; // y0
+    arrow_sfa->data[2] = 0.0f; // z0
+
+    // Vertex 2: Point along X-axis
+    arrow_sfa->data[3] = 1.0f; // x1
+    arrow_sfa->data[4] = 0.0f; // y1
+    arrow_sfa->data[5] = 0.0f; // z1
+
+    return arrow_sfa;
 }

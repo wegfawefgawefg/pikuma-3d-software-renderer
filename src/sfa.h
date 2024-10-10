@@ -2,6 +2,7 @@
 #define SFA_H
 
 #include "vec3.h"
+#include "mat4.h"
 
 // SFA: Sized Float Array
 typedef struct
@@ -28,8 +29,15 @@ void sia_free(SIA *sia);
 void sfa_rotate(SFA *sfa, Vec3 rotation);
 void sfa_scale(SFA *sfa, Vec3 scale);
 void sfa_translate(SFA *sfa, Vec3 translation);
+void sfa_vec3_transform(SFA *sfa, Mat4 transform);
+SFA *sfa_transform_vertices(const SFA *input_sfa, const Mat4 *mvp);
 
-SFA *sfa_orthographic_project(const SFA *sfa);
-SFA *sfa_isometric_project(const SFA *sfa);
+//////////////////////// PROJECTION FUNCTIONS ////////////////////////
+SFA *sfa_orthographic_projection_xy(const SFA *sfa);
+SFA *sfa_isometric_projection(const SFA *sfa);
+SFA *sfa_perspective_project(const SFA *sfa);
+
+//////////////////////// SHAPE FUNCTIONS ////////////////////////
+SFA *create_x_axis_arrow(void);
 
 #endif // SFA_H
