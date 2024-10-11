@@ -13,6 +13,7 @@
 #include "draw.h"
 #include "assets.h"
 #include "pixel_buffer.h"
+#include "f_texture.h"
 
 int WIDTH;
 int HEIGHT;
@@ -70,6 +71,7 @@ int main(int argc, char *argv[])
     SDL_Texture *renderTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
                                                    SDL_TEXTUREACCESS_TARGET, RENDER_WIDTH, RENDER_HEIGHT);
     PixelBuffer *pixel_buffer = create_pixel_buffer(RENDER_WIDTH, RENDER_HEIGHT);
+    FTexture *z_buffer = f_texture_new(RENDER_WIDTH, RENDER_HEIGHT);
 
     Assets *assets = load_assets(renderer);
     if (!assets)
@@ -91,9 +93,10 @@ int main(int argc, char *argv[])
         process_input(&state);
         step(&state);
         clear_pixel_buffer(pixel_buffer, 0x00000000);
+        f_texture_fill_float_max(z_buffer);
         // fade_pixel_buffer(pixel_buffer, 2);
         // color_rotate(pixel_buffer, 10.0);
-        draw(pixel_buffer, &state, assets);
+        draw(pixel_buffer, z_buffer, &state, assets);
 
         // clear the render texture
         SDL_SetRenderTarget(renderer, renderTexture);

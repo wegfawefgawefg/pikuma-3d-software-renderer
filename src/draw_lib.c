@@ -2,6 +2,7 @@
 #include "primitives.h"
 #include "utils.h"
 #include "vec2.h"
+#include "f_texture.h"
 
 void draw_line(PixelBuffer *pb, int x0, int y0, int x1, int y1, uint32_t color)
 {
@@ -120,11 +121,61 @@ void draw_triangle(PixelBuffer *pb, Triangle t, uint32_t color)
                     set_pixel_alpha(pb, p.x, p.y, color);
                 }
             }
-            else
+        }
+    }
+}
+
+// draw_triangle_centroid_z_per_pixel_z_check(pb, z_buffer, t, color, z);
+/*
+    when drawing a pixel we will sample the z buffer at that position
+    if the z value of the pixel is less than the z value in the z buffer we will draw the pixel and update the z buffer
+    else we will skip the pixel
+
+    can use f_texture get and set
+*/
+void draw_triangle_centroid_z_per_pixel_z_check(PixelBuffer *pb, FTexture *z_buffer, Triangle t, uint32_t color, float z)
+{
+    IVec2 p1 = vec2_to_ivec2(t.p1);
+    IVec2 p2 = vec2_to_ivec2(t.p2);
+    IVec2 p3 = vec2_to_ivec2(t.p3);
+
+    // Compute bounding box
+    int minX = imin(imin(p1.x, p2.x), p3.x);
+    int minY = imin(imin(p1.y, p2.y), p3.y);
+    int maxX = imax(imax(p1.x, p2.x), p3.x);
+    int maxY = imax(imax(p1.y, p2.y), p3.y);
+
+    // Clip against screen bounds
+    minX = imax(minX, 0);
+    minY = imax(minY, 0);
+    maxX = imin(maxX, pb->width - 1);
+    maxY = imin(maxY, pb->height - 1);
+
+    // Determine triangle orientation
+    int area = edge_function(p1, p2, p3);
+    bool clockwise = area <= 0;
+
+    IVec2 p;
+    for (p.y = minY; p.y <= maxY; p.y++)
+    {
+        for (p.x = minX; p.x <= maxX; p.x++)
+        {
+            int w1 = edge_function(p1, p2, p);
+            int w2 = edge_function(p2, p3, p);
+            int w3 = edge_function(p3, p1, p);
+
+            // If p is on or inside all edges, render pixel
+            if (clockwise)
             {
-                if (w1 >= 0 && w2 >= 0 && w3 >= 0)
+                if (w1 <= 0 && w2 <= 0 && w3 <= 0)
                 {
-                    set_pixel_alpha(pb, p.x, p.y, color);
+                    // get z value from z buffer
+                    float z_buffer_value = f_texture_get(z_buffer, p.x, p.y);
+                    if (z > 80.0f && z < z_buffer_value)
+                    {
+                        set_pixel_alpha(pb, p.x, p.y, color);
+                        f_texture_set(z_buffer, p.x, p.y, z);
+                    }
                 }
             }
         }
@@ -226,7 +277,7 @@ void draw_ortho_quad(PixelBuffer *pb, Quad *quad, uint32_t color)
     draw_triangle(pb, t2, color);
 }
 
-// in this case the SFA is 2d verticies: x,y
+// in this case the SFA is 2d vertices: x,y
 void draw_points(PixelBuffer *pb, SFA *points, uint32_t color)
 {
     for (int i = 0; i < points->length; i += 2)
@@ -237,8 +288,8 @@ void draw_points(PixelBuffer *pb, SFA *points, uint32_t color)
     }
 }
 
-// in this case the SFA is 2d verticies: x,y,x,y
-void draw_tris(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color)
+// in this case the SFA is 2d vertices: x,y,x,y
+void draw_tris(PixelBuffer *pb, SFA *vertices, SIA *indices, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -246,16 +297,16 @@ void draw_tris(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color)
         int idx2 = indices->data[i + 1];
         int idx3 = indices->data[i + 2];
 
-        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
-        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
-        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+        Vec2 p1 = {vertices->data[idx1 * 2], vertices->data[idx1 * 2 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 2], vertices->data[idx2 * 2 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 2], vertices->data[idx3 * 2 + 1]};
 
         Triangle t = {p1, p2, p3};
         draw_triangle(pb, t, color);
     }
 }
 
-void draw_tris_with_colors(PixelBuffer *pb, SFA *verticies, SIA *indices, SU32A *colors)
+void draw_tris_with_colors(PixelBuffer *pb, SFA *vertices, SIA *indices, SU32A *colors)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -263,9 +314,9 @@ void draw_tris_with_colors(PixelBuffer *pb, SFA *verticies, SIA *indices, SU32A 
         int idx2 = indices->data[i + 1];
         int idx3 = indices->data[i + 2];
 
-        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
-        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
-        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+        Vec2 p1 = {vertices->data[idx1 * 2], vertices->data[idx1 * 2 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 2], vertices->data[idx2 * 2 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 2], vertices->data[idx3 * 2 + 1]};
 
         Triangle t = {p1, p2, p3};
         uint32_t color = colors->data[i / 3];
@@ -275,8 +326,16 @@ void draw_tris_with_colors(PixelBuffer *pb, SFA *verticies, SIA *indices, SU32A 
     }
 }
 
-// // in the center of each try in red just draw the face index
-void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *verticies, SIA *indices, uint32_t size, uint32_t color)
+/*
+    vertices: x1a,y1a,z1a,x1b,y1b,z1b,x1c,y1c,z1c, x2a,y2a,z2a,x2b,y2b,z2b,x2c,y2c,z2c, ...
+    verticies are in groups of 3 (a,b,c) for each triangle, and each vertex has x,y in screenspace and z is cam dist
+
+    for compute cost savings we will first average the z values of the 3 vertices of each triangle
+    when drawing a pixel we will sample the z buffer at that position
+    if the z value of the pixel is less than the z value in the z buffer we will draw the pixel and update the z buffer
+    else we will skip the pixel
+*/
+void draw_tris_with_colors_and_depth(PixelBuffer *pb, FTexture *z_buffer, SFA *vertices, SIA *indices, SU32A *colors)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -284,9 +343,33 @@ void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *verticie
         int idx2 = indices->data[i + 1];
         int idx3 = indices->data[i + 2];
 
-        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
-        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
-        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+        Vec2 p1 = {vertices->data[idx1 * 3], vertices->data[idx1 * 3 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 3], vertices->data[idx2 * 3 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 3], vertices->data[idx3 * 3 + 1]};
+
+        Triangle t = {p1, p2, p3};
+        uint32_t color = colors->data[i / 3];
+
+        // average the z values of the 3 vertices
+        float z = (vertices->data[idx1 * 3 + 2] + vertices->data[idx2 * 3 + 2] + vertices->data[idx3 * 3 + 2]) / 3.0f;
+
+        // draw the triangle
+        draw_triangle_centroid_z_per_pixel_z_check(pb, z_buffer, t, color, z);
+    }
+}
+
+// // in the center of each try in red just draw the face index
+void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SIA *indices, uint32_t size, uint32_t color)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {vertices->data[idx1 * 2], vertices->data[idx1 * 2 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 2], vertices->data[idx2 * 2 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 2], vertices->data[idx3 * 2 + 1]};
 
         Vec2 center = vec2_create((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3);
         char face_number[10];
@@ -295,7 +378,7 @@ void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *verticie
     }
 }
 
-void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *verticies, SIA *indices, SU32A *colors, uint32_t size, uint32_t color)
+void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SIA *indices, SU32A *colors, uint32_t size, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -303,9 +386,9 @@ void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charma
         int idx2 = indices->data[i + 1];
         int idx3 = indices->data[i + 2];
 
-        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
-        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
-        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+        Vec2 p1 = {vertices->data[idx1 * 2], vertices->data[idx1 * 2 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 2], vertices->data[idx2 * 2 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 2], vertices->data[idx3 * 2 + 1]};
 
         Triangle t = {p1, p2, p3};
         uint32_t face_color = colors->data[i / 3];
@@ -318,8 +401,8 @@ void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charma
     }
 }
 
-// in this case the SFA is 2d verticies: x,y,x,y
-void draw_tris_lines(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t color)
+// in this case the SFA is 2d vertices: x,y,x,y
+void draw_tris_lines(PixelBuffer *pb, SFA *vertices, SIA *indices, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -327,9 +410,9 @@ void draw_tris_lines(PixelBuffer *pb, SFA *verticies, SIA *indices, uint32_t col
         int idx2 = indices->data[i + 1];
         int idx3 = indices->data[i + 2];
 
-        Vec2 p1 = {verticies->data[idx1 * 2], verticies->data[idx1 * 2 + 1]};
-        Vec2 p2 = {verticies->data[idx2 * 2], verticies->data[idx2 * 2 + 1]};
-        Vec2 p3 = {verticies->data[idx3 * 2], verticies->data[idx3 * 2 + 1]};
+        Vec2 p1 = {vertices->data[idx1 * 2], vertices->data[idx1 * 2 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 2], vertices->data[idx2 * 2 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 2], vertices->data[idx3 * 2 + 1]};
 
         Triangle t = {p1, p2, p3};
         draw_triangle_lines(pb, t, color);

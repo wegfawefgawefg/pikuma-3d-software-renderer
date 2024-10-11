@@ -7,6 +7,7 @@
 #include "draw_lib.h"
 #include "pixel_buffer.h"
 #include "assets.h"
+#include "f_texture.h"
 
-void draw(PixelBuffer *pb, State *state, Assets *assets);
-#endif // DRAW_H
+void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets);
+#endif

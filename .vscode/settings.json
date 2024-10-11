@@ -12,6 +12,8 @@
         "numeric": "c",
         "algorithm": "c",
         "math.h": "c",
-        "mesh.h": "c"
+        "mesh.h": "c",
+        "utils.h": "c",
+        "vec2.h": "c"
     }
 }

@@ -40,4 +40,4 @@ SFA *sfa_perspective_project(const SFA *sfa);
 //////////////////////// SHAPE FUNCTIONS ////////////////////////
 SFA *create_x_axis_arrow(void);
 
-#endif // SFA_H
+#endif

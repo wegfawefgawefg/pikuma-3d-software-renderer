@@ -28,4 +28,6 @@ double radians_to_degrees(double radians);
 
 char *trim_whitespace(char *str);
 
-#endif // UTILS_H
+float map_range(float value, float in_min, float in_max, float out_min, float out_max);
+
+#endif

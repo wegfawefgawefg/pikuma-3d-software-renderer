@@ -17,9 +17,6 @@ typedef struct
 
     Vec2 pointer_pos;
 
-    Vec2 ripple_center;
-    float ripple_magnitude;
-
 } State;
 
 State *new_state(void);

@@ -62,4 +62,4 @@ uint32_t color_fmul(uint32_t color, float scalar);
 Vec3 color_to_vec3(uint32_t color);
 uint32_t vec3_to_color(Vec3 v);
 
-#endif // COLORS_H
+#endif

@@ -70,6 +70,27 @@ void process_input(State *state)
                 state->camera_pos.y -= state->scale;
             }
 
+            // wasd for left right, in and out
+            if (event.key.keysym.sym == SDLK_a)
+            {
+                state->camera_pos.x -= state->scale;
+            }
+            if (event.key.keysym.sym == SDLK_d)
+            {
+                state->camera_pos.x += state->scale;
+            }
+            if (event.key.keysym.sym == SDLK_w)
+            {
+                state->camera_pos.z -= state->scale;
+            }
+            if (event.key.keysym.sym == SDLK_s)
+            {
+                state->camera_pos.z += state->scale;
+            }
+
+            // print cam pos
+            printf("camera pos: %f, %f, %f\n", state->camera_pos.x, state->camera_pos.y, state->camera_pos.z);
+
             // scale up and down from 0.2 to 50 with mouse scroll
             float scale_speed = 1.0;
             if (event.key.keysym.sym == SDLK_EQUALS || event.key.keysym.sym == SDLK_KP_PLUS)
@@ -106,16 +127,6 @@ void process_input(State *state)
             // clamp between 0 and 10
             state->pointer_pos.x = fmax(0, fmin(9, state->pointer_pos.x));
             state->pointer_pos.y = fmax(0, fmin(9, state->pointer_pos.y));
-
-            // if press space, ripple center is set to pointer pos
-            if (event.key.keysym.sym == SDLK_SPACE)
-            {
-                state->ripple_center = state->pointer_pos;
-                state->ripple_magnitude = 1.0;
-
-                // print ripple center
-                printf("ripple center: %f, %f\n", state->ripple_center.x, state->ripple_center.y);
-            }
 
             break;
         }
