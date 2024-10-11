@@ -472,6 +472,53 @@ Mat4 mat4_create_mvp(
     return mvp;
 }
 
+Mat4 mat4_create_model(
+    Vec3 model_position,
+    Vec3 model_rotation,
+    Vec3 model_scale)
+{
+    // 1. Create Model Matrix
+    // Translation Matrix
+    Mat4 translation = mat4_translate(model_position);
+
+    // Rotation Matrices (assuming rotation_order is X, then Y, then Z)
+    Mat4 rotation_x = mat4_rotate_x(model_rotation.x);
+    Mat4 rotation_y = mat4_rotate_y(model_rotation.y);
+    Mat4 rotation_z = mat4_rotate_z(model_rotation.z);
+
+    // Combined Rotation Matrix
+    Mat4 rotation = mat4_multiply(mat4_multiply(rotation_z, rotation_y), rotation_x);
+
+    // Scale Matrix
+    Mat4 scale = mat4_scale(model_scale);
+
+    // Combined Model Matrix: Translation * Rotation * Scale
+    Mat4 model = mat4_multiply(mat4_multiply(translation, rotation), scale);
+
+    return model;
+}
+
+Mat4 mat4_create_vp(
+    Vec3 camera_pos,
+    Vec3 camera_target,
+    Vec3 camera_up,
+    float fov,
+    float aspect_ratio,
+    float near_plane,
+    float far_plane)
+{
+    // 2. Create View Matrix
+    Mat4 view = mat4_look_at(camera_pos, camera_target, camera_up);
+
+    // 3. Create Projection Matrix
+    Mat4 projection = mat4_perspective(fov, aspect_ratio, near_plane, far_plane);
+
+    // 4. Combine to Create VP Matrix: Projection * View
+    Mat4 vp = mat4_multiply(projection, view);
+
+    return vp;
+}
+
 Mat4 mat4_create_mvp_isometric_specific(
     Vec3 model_position,
     Vec3 model_rotation,

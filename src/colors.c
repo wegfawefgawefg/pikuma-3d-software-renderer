@@ -4,16 +4,16 @@
 
 #include "vec3.h"
 
-uint32_t from_rgb(uint8_t r, uint8_t g, uint8_t b)
+uint32_t color_from_rgb(uint8_t r, uint8_t g, uint8_t b)
 {
     return (r << 24) | (g << 16) | (b << 8) | 0xFF;
 }
-uint32_t from_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+uint32_t color_from_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
-uint32_t set_alpha(uint32_t color, uint8_t alpha)
+uint32_t color_set_alpha(uint32_t color, uint8_t alpha)
 {
     return (color & 0x00FFFFFF) | (alpha << 24);
 }
@@ -28,13 +28,13 @@ uint32_t color_fmul(uint32_t color, float scalar)
     r = (uint8_t)(r * scalar);
     g = (uint8_t)(g * scalar);
     b = (uint8_t)(b * scalar);
-    a = (uint8_t)(a * scalar);
+    // a = (uint8_t)(a * scalar);
 
     return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
 // respect clamping
-uint32_t add_colors(uint32_t color_a, uint32_t color_b)
+uint32_t color_add(uint32_t color_a, uint32_t color_b)
 {
     uint8_t r_a = (color_a >> 24) & 0xFF;
     uint8_t g_a = (color_a >> 16) & 0xFF;
@@ -64,7 +64,7 @@ uint32_t add_colors(uint32_t color_a, uint32_t color_b)
 }
 
 // blend colors
-uint32_t blend_colors(uint32_t color_a, uint32_t color_b)
+uint32_t color_blend(uint32_t color_a, uint32_t color_b)
 {
     uint8_t r_a = (color_a >> 24) & 0xFF;
     uint8_t g_a = (color_a >> 16) & 0xFF;
@@ -108,5 +108,5 @@ uint32_t vec3_to_color(Vec3 v)
     int z = (int)(v.z * 255);
     z = z < 0 ? 0 : z > 255 ? 255
                             : z;
-    return from_rgb(x, y, z);
+    return color_from_rgb(x, y, z);
 }

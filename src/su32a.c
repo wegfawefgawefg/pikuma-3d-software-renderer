@@ -28,3 +28,22 @@ void su32a_free(SU32A *su32a)
     free(su32a->data);
     free(su32a);
 }
+
+void su32a_set(SU32A *su32a, int index, uint32_t value)
+{
+    if (index < 0 || index >= su32a->length)
+    {
+        return;
+    }
+
+    su32a->data[index] = value;
+}
+uint32_t su32a_get(SU32A *su32a, int index)
+{
+    if (index < 0 || index >= su32a->length)
+    {
+        return 0;
+    }
+
+    return su32a->data[index];
+}

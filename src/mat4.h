@@ -51,6 +51,19 @@ Mat4 mat4_create_mvp(
     float aspect_ratio, // Width / Height
     float near_plane,
     float far_plane);
+Mat4 mat4_create_model(
+    Vec3 model_position,
+    Vec3 model_rotation,
+    Vec3 model_scale);
+Mat4 mat4_create_vp(
+    Vec3 camera_pos,
+    Vec3 camera_target,
+    Vec3 camera_up,
+    float fov,
+    float aspect_ratio,
+    float near_plane,
+    float far_plane);
+
 Mat4 mat4_create_mvp_isometric_specific(
     Vec3 model_position,
     Vec3 model_rotation,

@@ -33,4 +33,4 @@ void mesh_transform(Mesh *mesh, Mat4 transform);
 
 Vec3 mesh_get_center(const Mesh *mesh);
 
-#endif // MESH_H
+#endif

@@ -53,12 +53,13 @@
 #define COLOR_TRANS_WHITE 0xFFFFFF80
 #define COLOR_TRANS_PURPLE 0x80008080
 
-uint32_t from_rgb(uint8_t r, uint8_t g, uint8_t b);
-uint32_t from_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-uint32_t set_alpha(uint32_t color, uint8_t alpha);
-uint32_t add_colors(uint32_t color_a, uint32_t color_b);
-uint32_t blend_colors(uint32_t color_a, uint32_t color_b);
+uint32_t color_from_rgb(uint8_t r, uint8_t g, uint8_t b);
+uint32_t color_from_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+uint32_t color_set_alpha(uint32_t color, uint8_t alpha);
+uint32_t color_add(uint32_t color_a, uint32_t color_b);
+uint32_t color_blend(uint32_t color_a, uint32_t color_b);
 uint32_t color_fmul(uint32_t color, float scalar);
+uint32_t color_fadd(uint32_t color, float scalar);
 Vec3 color_to_vec3(uint32_t color);
 uint32_t vec3_to_color(Vec3 v);
 

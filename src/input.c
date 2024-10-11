@@ -81,11 +81,11 @@ void process_input(State *state)
             }
             if (event.key.keysym.sym == SDLK_w)
             {
-                state->camera_pos.z -= state->scale;
+                state->camera_pos.z += state->scale;
             }
             if (event.key.keysym.sym == SDLK_s)
             {
-                state->camera_pos.z += state->scale;
+                state->camera_pos.z -= state->scale;
             }
 
             // print cam pos
