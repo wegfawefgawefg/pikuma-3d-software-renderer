@@ -19,7 +19,7 @@ Mesh *mesh_new(int vertex_length, int index_length)
         return NULL;
     }
 
-    mesh->indices = sia_new(index_length);
+    mesh->indices = su32a_new(index_length);
     if (!mesh->indices)
     {
         sfa_free(mesh->vertices);
@@ -37,7 +37,7 @@ Mesh *mesh_new(int vertex_length, int index_length)
     if (!mesh->colors)
     {
         sfa_free(mesh->vertices);
-        sia_free(mesh->indices);
+        su32a_free(mesh->indices);
         free(mesh);
         return NULL;
     }
@@ -52,7 +52,7 @@ void mesh_free(Mesh *mesh)
         return;
 
     sfa_free(mesh->vertices);
-    sia_free(mesh->indices);
+    su32a_free(mesh->indices);
     su32a_free(mesh->colors);
     free(mesh);
 }

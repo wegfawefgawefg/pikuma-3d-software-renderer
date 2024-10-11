@@ -14,6 +14,7 @@
         "math.h": "c",
         "mesh.h": "c",
         "utils.h": "c",
-        "vec2.h": "c"
+        "vec2.h": "c",
+        "su32a.h": "c"
     }
 }

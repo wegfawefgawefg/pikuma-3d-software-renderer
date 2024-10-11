@@ -30,4 +30,6 @@ char *trim_whitespace(char *str);
 
 float map_range(float value, float in_min, float in_max, float out_min, float out_max);
 
+float hash(int x);
+
 #endif

@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     SDL_ShowCursor(SDL_DISABLE);
 
     // Main loop
-    State state = *new_state();
+    State *state = new_state();
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     // Create render texture
@@ -86,17 +86,17 @@ int main(int argc, char *argv[])
     Uint32 frameStart;
     float frameTime;
 
-    while (!state.quit)
+    while (!state->quit)
     {
         frameStart = SDL_GetTicks();
 
-        process_input(&state);
-        step(&state);
+        process_input(state);
+        step(state);
         clear_pixel_buffer(pixel_buffer, 0x00000000);
         f_texture_fill_float_max(z_buffer);
         // fade_pixel_buffer(pixel_buffer, 2);
         // color_rotate(pixel_buffer, 10.0);
-        draw(pixel_buffer, z_buffer, &state, assets);
+        draw(pixel_buffer, z_buffer, state, assets);
 
         // clear the render texture
         SDL_SetRenderTarget(renderer, renderTexture);
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 
     // Clean up
     destroy_pixel_buffer(pixel_buffer);
-    free_state(&state);
+    free_state(state);
 
     TTF_CloseFont(font);
     SDL_DestroyTexture(renderTexture);

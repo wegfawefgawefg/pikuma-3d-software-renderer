@@ -9,9 +9,9 @@
 // MESH: Combined Vertex and Index Data
 typedef struct
 {
-    SFA *vertices; // Vertex data
-    SIA *indices;  // Index data
-    SU32A *colors; // Color data
+    SFA *vertices;  // Vertex data
+    SU32A *indices; // Index data
+    SU32A *colors;  // Color data
 } Mesh;
 
 // Function to create and free Mesh

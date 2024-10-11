@@ -23,12 +23,12 @@ void draw_arrow(PixelBuffer *pb, int x, int y, int size, uint32_t color);
 
 //////////////////////// DRAW SFA FUNCTIONS ////////////////////////
 void draw_points(PixelBuffer *pb, SFA *points, uint32_t color);
-void draw_tris(PixelBuffer *pb, SFA *vertices, SIA *indices, uint32_t color);
-void draw_tris_lines(PixelBuffer *pb, SFA *vertices, SIA *indices, uint32_t color);
-void draw_tris_with_colors(PixelBuffer *pb, SFA *vertices, SIA *indices, SU32A *colors);
-void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SIA *indices, uint32_t size, uint32_t color);
-void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SIA *indices, SU32A *colors, uint32_t size, uint32_t color);
-void draw_tris_with_colors_and_depth(PixelBuffer *pb, FTexture *z_buffer, SFA *vertices, SIA *indices, SU32A *colors);
+void draw_tris(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t color);
+void draw_tris_lines(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t color);
+void draw_tris_with_colors(PixelBuffer *pb, SFA *vertices, SU32A *indices, SU32A *colors);
+void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SU32A *indices, uint32_t size, uint32_t color);
+void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SU32A *indices, SU32A *colors, uint32_t size, uint32_t color);
+void draw_tris_with_colors_and_depth(PixelBuffer *pb, FTexture *z_buffer, SFA *vertices, SU32A *indices, SU32A *colors);
 
 //////////////////////// ORTHOGRAPHIC PROJECTION ////////////////////////
 void draw_ortho_quad_lines(PixelBuffer *pb, Quad *quad, uint32_t color);

@@ -152,3 +152,12 @@ float map_range(float value, float in_min, float in_max, float out_min, float ou
 {
     return out_min + (out_max - out_min) * ((value - in_min) / (in_max - in_min));
 }
+
+// Simple hash function to generate pseudo-random float between 0 and 1
+float hash(int x)
+{
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return ((float)x) / 4294967295.0f;
+}

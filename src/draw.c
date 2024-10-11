@@ -18,114 +18,45 @@
 #include "f_texture.h"
 #include "light.h"
 
-// Simple hash function to generate pseudo-random float between 0 and 1
-float hash(int x)
-{
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = (x >> 16) ^ x;
-    return ((float)x) / 4294967295.0f;
-}
-
-// ISOMETRIC
-// Mat4 model = mat4_create_mvp_isometric_specific(
-//     vec3_create(0.0f, 0.0f, 0.0f),                     // model position
-//     vec3_create(0.0f, angle, 0.0f),                    // model rotation
-//     vec3_create(scalef, scalef, scalef),               // model scale
-//     (float)pb->width / (float)pb->height, 0.1f, 100.0f // aspect ratio, near plane, far plane
-// );
-
-// draw the gba mesh
 void draw_gba_mesh(
     PixelBuffer *pb, FTexture *z_buffer,
     State *state, Assets *assets,
     Light *lights, uint8_t num_lights,
     Vec3 pos, Vec3 rot, Vec3 scale)
 {
-    // PERSPECTIVE
-    // Mat4 model = mat4_create_mvp(
-    //     pos, rot, scale, // model position, rotation, scale
-    //     state->camera_pos, state->camera_target, state->camera_up,
-    //     degrees_to_radians(90.0), (float)pb->width / (float)pb->height, 0.1f, 100.0f);
     Mat4 model = mat4_create_model(pos, rot, scale);
+    // SFA *model_transformed_vertices = sfa_transform_vertices(assets->gba_mesh->vertices, &model);
 
-    SFA *model_transformed_vertices = sfa_transform_vertices(assets->gba_mesh->vertices, &model);
+    // bool model_too_far_from_lights = false;
+    // // get first vert
+    // Vec3 first_vert = vec3_create(
+    //     model_transformed_vertices->data[0],
+    //     model_transformed_vertices->data[1],
+    //     model_transformed_vertices->data[2]);
+    // for (int i = 0; i < num_lights; i++)
+    // {
+    //     float distance = vec3_distance(lights[i].pos, first_vert);
+    //     if (distance > 600)
+    //     {
+    //         model_too_far_from_lights = true;
+    //         break;
+    //     }
+    // }
 
-    // lighting calculations
-    // for now ignore the light color and just use the brightness
-    // go through each tri, calculate the centroid, distance to light, and brightness
-    SU32A *colors = su32a_new(assets->gba_mesh->colors->length);
-    {
-        int num_faces = assets->gba_mesh->indices->length / 3;
-        for (int i = 0; i < num_faces; i++)
-        {
-            int i0 = assets->gba_mesh->indices->data[i * 3 + 0];
-            int i1 = assets->gba_mesh->indices->data[i * 3 + 1];
-            int i2 = assets->gba_mesh->indices->data[i * 3 + 2];
-            // int i3 = assets->gba_mesh->indices->data[i * 3 + 3];
-
-            Vec3 a = vec3_create(
-                model_transformed_vertices->data[i0 * 4 + 0],
-                model_transformed_vertices->data[i0 * 4 + 1],
-                model_transformed_vertices->data[i0 * 4 + 2]);
-
-            Vec3 b = vec3_create(
-                model_transformed_vertices->data[i1 * 4 + 0],
-                model_transformed_vertices->data[i1 * 4 + 1],
-                model_transformed_vertices->data[i1 * 4 + 2]);
-
-            Vec3 c = vec3_create(
-                model_transformed_vertices->data[i2 * 4 + 0],
-                model_transformed_vertices->data[i2 * 4 + 1],
-                model_transformed_vertices->data[i2 * 4 + 2]);
-
-            Vec3 centroid = vec3_create(0.0f, 0.0f, 0.0f);
-            centroid = vec3_add(centroid, a);
-            centroid = vec3_add(centroid, b);
-            centroid = vec3_add(centroid, c);
-            centroid = vec3_div(centroid, 3.0f);
-
-            Vec3 face_normal = vec3_cross(vec3_sub(b, a), vec3_sub(c, a));
-            face_normal = vec3_normalize(face_normal);
-            // invert face_normal
-            // face_normal = vec3_mul(face_normal, -1.0f);
-
-            // calculate the brightness
-            // for now ignore normal, just do distance
-            // float brightness = 0.0f;
-            uint32_t light_color_sum = 0;
-            const float dist_factor = 1.0f;
-            for (int j = 0; j < num_lights; j++)
-            {
-                Light light = lights[j];
-                Vec3 light_dir = vec3_sub(light.pos, centroid);
-                float distance = vec3_length(light_dir);
-                float dot = vec3_dot(face_normal, vec3_normalize(light_dir));
-                dot = fmax(0.0f, dot);
-
-                float magnitude = 1.0f / ((distance * distance) * dist_factor);
-                magnitude = fmin(1.0f, magnitude);
-                magnitude = fmax(0.0f, magnitude);
-
-                magnitude *= dot;
-                magnitude *= light.brightness;
-
-                // clamp again
-                magnitude = fmin(1.0f, magnitude);
-                magnitude = fmax(0.0f, magnitude);
-
-                // calculate this lights influence
-                uint32_t this_light_color = color_fmul(light.color, magnitude);
-                light_color_sum = color_add(light_color_sum, this_light_color);
-            }
-            const float ambient_factor = 0.01f;
-            uint32_t color = assets->gba_mesh->colors->data[i];
-            uint32_t color_f = color_fmul(color, ambient_factor);
-            uint32_t col = color_add(color_f, light_color_sum);
-            colors->data[i] = col;
-        }
-    }
-    sfa_free(model_transformed_vertices);
+    // SU32A *colors = NULL;
+    // if (!model_too_far_from_lights)
+    // {
+    //     colors = lighting_get_face_colors(
+    //         model_transformed_vertices,
+    //         assets->gba_mesh->indices,
+    //         assets->gba_mesh->colors,
+    //         lights, num_lights);
+    // }
+    // else
+    // {
+    //     colors = assets->gba_mesh->colors;
+    // }
+    // sfa_free(model_transformed_vertices);
 
     Mat4 vp = mat4_create_vp(
         state->camera_pos, state->camera_target, state->camera_up,
@@ -150,13 +81,16 @@ void draw_gba_mesh(
     // draw_tris_with_colors(pb, screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors);
     // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors);
     // use the colors calculated from the lighting
-    draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->indices, colors);
+    draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors);
 
     // Cleanup
     sfa_free(transformed_vertices);
     sfa_free(screen_coords);
 
-    su32a_free(colors);
+    // if (!model_too_far_from_lights)
+    // {
+    //     su32a_free(colors);
+    // }
 }
 
 void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
@@ -209,20 +143,42 @@ void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
     // );
 
     // draw a 4x4 grid of gba meshes, centered at the origin though
+    // int grid_size = 12;
+    // float grid_spacing = 100.0f;
+    // float half_grid = (grid_size - 1) * grid_spacing * 0.5f;
+    // for (int y = 0; y < grid_size; y++)
+    // {
+    //     for (int x = 0; x < grid_size; x++)
+    //     {
+    //         float x_pos = x * grid_spacing - half_grid;
+    //         float y_pos = y * grid_spacing - half_grid;
+    //         draw_gba_mesh(pb, z_buffer, state, assets, lights, num_lights,
+    //                       vec3_create(x_pos, 0.0f, y_pos),    // position
+    //                       vec3_create(0.0f, angle, 0.0f),     // rotation
+    //                       vec3_create(scalef, scalef, scalef) // scale
+    //         );
+    //     }
+    // }
+
+    // draw a nxnxn cube grid of gba meshes, centered at the origin
     int grid_size = 8;
     float grid_spacing = 100.0f;
     float half_grid = (grid_size - 1) * grid_spacing * 0.5f;
-    for (int y = 0; y < grid_size; y++)
+    for (int z = 0; z < grid_size; z++)
     {
-        for (int x = 0; x < grid_size; x++)
+        for (int y = 0; y < grid_size; y++)
         {
-            float x_pos = x * grid_spacing - half_grid;
-            float y_pos = y * grid_spacing - half_grid;
-            draw_gba_mesh(pb, z_buffer, state, assets, lights, num_lights,
-                          vec3_create(x_pos, 0.0f, y_pos),    // position
-                          vec3_create(0.0f, angle, 0.0f),     // rotation
-                          vec3_create(scalef, scalef, scalef) // scale
-            );
+            for (int x = 0; x < grid_size; x++)
+            {
+                float x_pos = x * grid_spacing - half_grid;
+                float y_pos = y * grid_spacing - half_grid;
+                float z_pos = z * grid_spacing - half_grid;
+                draw_gba_mesh(pb, z_buffer, state, assets, lights, num_lights,
+                              vec3_create(x_pos, y_pos, z_pos),   // position
+                              vec3_create(0.0f, angle, 0.0f),     // rotation
+                              vec3_create(scalef, scalef, scalef) // scale
+                );
+            }
         }
     }
 

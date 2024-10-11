@@ -168,7 +168,7 @@ Mesh *load_obj_to_mesh(const char *filename)
     char line[256];
     // Temporary storage for vertices and indices
     SFA *vertices = sfa_new(0);
-    SIA *indices = sia_new(0);
+    SU32A *indices = su32a_new(0);
     if (!vertices || !indices)
     {
         fprintf(stderr, "Failed to allocate temporary arrays for OBJ parsing\n");
@@ -195,7 +195,7 @@ Mesh *load_obj_to_mesh(const char *filename)
                 {
                     fprintf(stderr, "Failed to realloc vertices data\n");
                     sfa_free(vertices);
-                    sia_free(indices);
+                    su32a_free(indices);
                     fclose(file);
                     mesh_free(mesh);
                     return NULL;
@@ -260,12 +260,12 @@ Mesh *load_obj_to_mesh(const char *filename)
             {
                 int current_length = indices->length;
                 indices->length += 3;
-                int *new_data = realloc(indices->data, sizeof(int) * indices->length);
+                uint32_t *new_data = realloc(indices->data, sizeof(uint32_t) * indices->length);
                 if (!new_data)
                 {
                     fprintf(stderr, "Failed to realloc indices data\n");
                     sfa_free(vertices);
-                    sia_free(indices);
+                    su32a_free(indices);
                     fclose(file);
                     mesh_free(mesh);
                     return NULL;

@@ -28,6 +28,8 @@
 #define USE_GBA_BORDER false
 #define SHOW_FPS true
 
+#define AMBIENT_LIGHT 0.4f
+
 extern int WIDTH;
 extern int HEIGHT;
 
