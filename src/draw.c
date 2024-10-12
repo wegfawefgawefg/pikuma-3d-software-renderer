@@ -82,7 +82,7 @@ void draw_mesh(
     map_to_screen_keep_z(transformed_vertices, screen_coords, pb->width, pb->height);
 
     // Render lines
-    draw_tris_lines_with_depth(pb, screen_coords, assets->gba_mesh->indices, COLOR_WHITE);
+    // draw_tris_lines_with_depth(pb, screen_coords, assets->gba_mesh->indices, COLOR_WHITE);
     // draw_tris_with_colors_and_face_numbers(
     //     pb, assets->charmap_white,
     //     screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors, 1.0, COLOR_BLACK);
@@ -90,7 +90,7 @@ void draw_mesh(
     // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors);
     // use the colors calculated from the lighting
     // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, indices, colors);
-    // draw_tris_with_colors_and_depth_with_face_buffer(pb, z_buffer, face_buffer, screen_coords, indices, colors);
+    draw_tris_with_colors_and_depth_with_face_buffer(pb, z_buffer, face_buffer, screen_coords, indices, colors);
 
     // Cleanup
     sfa_free(transformed_vertices);
@@ -416,7 +416,7 @@ void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
 
     // draw a nxnxn cube grid of gba meshes, centered at the origin
     Mesh *mesh = assets->jet_plane_mesh;
-    int grid_size = 1;
+    int grid_size = 16;
     float grid_spacing = 100.0f;
     float half_grid = (grid_size - 1) * grid_spacing * 0.5f;
     for (int z = 0; z < grid_size; z++)
