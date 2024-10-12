@@ -416,7 +416,7 @@ void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
 
     // draw a nxnxn cube grid of gba meshes, centered at the origin
     Mesh *mesh = assets->jet_plane_mesh;
-    int grid_size = 16;
+    int grid_size = 1;
     float grid_spacing = 100.0f;
     float half_grid = (grid_size - 1) * grid_spacing * 0.5f;
     for (int z = 0; z < grid_size; z++)
