@@ -82,7 +82,7 @@ void draw_mesh(
     map_to_screen_keep_z(transformed_vertices, screen_coords, pb->width, pb->height);
 
     // Render lines
-    // draw_tris_lines(pb, screen_coords, assets->gba_mesh->indices, COLOR_WHITE);
+    draw_tris_lines_with_depth(pb, screen_coords, assets->gba_mesh->indices, COLOR_WHITE);
     // draw_tris_with_colors_and_face_numbers(
     //     pb, assets->charmap_white,
     //     screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors, 1.0, COLOR_BLACK);
@@ -90,7 +90,7 @@ void draw_mesh(
     // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors);
     // use the colors calculated from the lighting
     // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, indices, colors);
-    draw_tris_with_colors_and_depth_with_face_buffer(pb, z_buffer, face_buffer, screen_coords, indices, colors);
+    // draw_tris_with_colors_and_depth_with_face_buffer(pb, z_buffer, face_buffer, screen_coords, indices, colors);
 
     // Cleanup
     sfa_free(transformed_vertices);
@@ -101,48 +101,8 @@ void draw_mesh(
     //     su32a_free(colors);
     // }
 }
-// // Function to draw a horizontal hue gradient
-// void draw_hue_gradient(PixelBuffer *pb)
-// {
-//     // Define color picker position
-//     int picker_x = pb->width - COLOR_PICKER_WIDTH - COLOR_PICKER_MARGIN;
-//     int picker_y = COLOR_PICKER_MARGIN;
 
-//     for (int x = 0; x < COLOR_PICKER_WIDTH; x++)
-//     {
-//         // Calculate hue (0 to 360 degrees)
-//         float hue = ((float)x / (float)(COLOR_PICKER_WIDTH - 1)) * 360.0f;
-
-//         // Define full saturation and value for vivid colors
-//         float saturation = 1.0f;
-//         float value = 1.0f;
-
-//         // Convert HSV to RGB
-//         uint8_t r, g, b;
-//         hsv_to_rgb(hue, saturation, value, &r, &g, &b);
-
-//         // Pack RGB into uint32_t RGBA format (assuming R in highest byte)
-//         uint32_t rgb_packed = ((uint32_t)r << 24) | ((uint32_t)g << 16) | ((uint32_t)b << 8) | 0xFF; // A=255
-
-//         for (int y = 0; y < COLOR_PICKER_HEIGHT; y++)
-//         {
-//             pixel_buffer_set(pb, picker_x + x, picker_y + y, rgb_packed);
-//         }
-//     }
-
-//     // Optional: Draw border around the color picker
-//     uint32_t border_color = 0xFFFFFFFF; // White border
-//     for (int x = 0; x < COLOR_PICKER_WIDTH; x++)
-//     {
-//         pixel_buffer_set(pb, picker_x + x, picker_y, border_color);
-//         pixel_buffer_set(pb, picker_x + x, picker_y + COLOR_PICKER_HEIGHT - 1, border_color);
-//     }
-//     for (int y = 0; y < COLOR_PICKER_HEIGHT; y++)
-//     {
-//         pixel_buffer_set(pb, picker_x, picker_y + y, border_color);
-//         pixel_buffer_set(pb, picker_x + COLOR_PICKER_WIDTH - 1, picker_y + y, border_color);
-//     }
-// }
+// function to draw mesh as wireframe
 
 // Function to draw the 2D hue-saturation color picker
 void draw_hue_saturation_picker(PixelBuffer *pb, State *state)

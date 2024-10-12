@@ -635,7 +635,7 @@ void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charma
     }
 }
 
-// in this case the SFA is 2d vertices: x,y,x,y
+// in this case the SFA is 2d vertices: x,y
 void draw_tris_lines(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
@@ -647,6 +647,24 @@ void draw_tris_lines(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t co
         Vec2 p1 = {vertices->data[idx1 * 2], vertices->data[idx1 * 2 + 1]};
         Vec2 p2 = {vertices->data[idx2 * 2], vertices->data[idx2 * 2 + 1]};
         Vec2 p3 = {vertices->data[idx3 * 2], vertices->data[idx3 * 2 + 1]};
+
+        Triangle t = {p1, p2, p3};
+        draw_triangle_lines(pb, t, color);
+    }
+}
+
+// in this case the SFA is 2d verticies with depth: x,y,_z do not use the z value
+void draw_tris_lines_with_depth(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t color)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {vertices->data[idx1 * 3], vertices->data[idx1 * 3 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 3], vertices->data[idx2 * 3 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 3], vertices->data[idx3 * 3 + 1]};
 
         Triangle t = {p1, p2, p3};
         draw_triangle_lines(pb, t, color);
