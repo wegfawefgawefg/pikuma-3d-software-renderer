@@ -18,6 +18,11 @@ State *new_state(void)
 
     state->pointer_pos = vec2_create(0, 0);
 
+    state->color = 0xFFFFFFFF;
+    state->hue = 0.0f;
+    state->saturation = 1.0f;
+    state->brightness = 1.0f;
+
     return state;
 }
 

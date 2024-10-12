@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     // Create render texture
     SDL_Texture *renderTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
                                                    SDL_TEXTUREACCESS_TARGET, RENDER_WIDTH, RENDER_HEIGHT);
-    PixelBuffer *pixel_buffer = create_pixel_buffer(RENDER_WIDTH, RENDER_HEIGHT);
+    PixelBuffer *pixel_buffer = pixel_buffer_new(RENDER_WIDTH, RENDER_HEIGHT);
     FTexture *z_buffer = f_texture_new(RENDER_WIDTH, RENDER_HEIGHT);
 
     Assets *assets = load_assets(renderer);
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
     }
 
     // Clean up
-    destroy_pixel_buffer(pixel_buffer);
+    pixel_buffer_free(pixel_buffer);
     free_state(state);
 
     TTF_CloseFont(font);

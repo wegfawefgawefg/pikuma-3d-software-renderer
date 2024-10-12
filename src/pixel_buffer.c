@@ -3,7 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-PixelBuffer *create_pixel_buffer(int width, int height)
+PixelBuffer *pixel_buffer_new(int width, int height)
 {
     PixelBuffer *pb = (PixelBuffer *)malloc(sizeof(PixelBuffer));
     if (!pb)
@@ -23,7 +23,7 @@ PixelBuffer *create_pixel_buffer(int width, int height)
     return pb;
 }
 
-void destroy_pixel_buffer(PixelBuffer *pb)
+void pixel_buffer_free(PixelBuffer *pb)
 {
     free(pb->pixels);
     free(pb);
@@ -34,7 +34,7 @@ void copy_to_texture(PixelBuffer *pb, SDL_Texture *texture)
     SDL_UpdateTexture(texture, NULL, pb->pixels, pb->width * sizeof(uint32_t));
 }
 
-void set_pixel(PixelBuffer *pb, int x, int y, uint32_t color)
+void pixel_buffer_set(PixelBuffer *pb, int x, int y, uint32_t color)
 {
     if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
     {
@@ -43,7 +43,7 @@ void set_pixel(PixelBuffer *pb, int x, int y, uint32_t color)
     pb->pixels[y * pb->width + x] = color;
 }
 
-void set_pixel_alpha(PixelBuffer *pb, int x, int y, uint32_t color)
+void pixel_buffer_set_alpha(PixelBuffer *pb, int x, int y, uint32_t color)
 {
     if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
     {
@@ -68,7 +68,7 @@ void set_pixel_alpha(PixelBuffer *pb, int x, int y, uint32_t color)
     // If alpha is 0, do nothing (fully transparent)
 }
 
-uint32_t get_pixel(PixelBuffer *pb, int x, int y)
+uint32_t pixel_buffer_get(PixelBuffer *pb, int x, int y)
 {
     if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
     {
@@ -107,6 +107,14 @@ void fade_pixel_buffer(PixelBuffer *pb, uint8_t amount)
     }
 }
 
+void pixel_buffer_fill(PixelBuffer *pb, uint32_t color)
+{
+    for (int i = 0; i < pb->width * pb->height; i++)
+    {
+        pb->pixels[i] = color;
+    }
+}
+
 PixelBuffer *scale_pixelbuffer(PixelBuffer *src, Vec2 scale)
 {
     if (!src || scale.x <= 0 || scale.y <= 0)
@@ -115,7 +123,7 @@ PixelBuffer *scale_pixelbuffer(PixelBuffer *src, Vec2 scale)
     int new_width = (int)(src->width * scale.x);
     int new_height = (int)(src->height * scale.y);
 
-    PixelBuffer *scaled = create_pixel_buffer(new_width, new_height);
+    PixelBuffer *scaled = pixel_buffer_new(new_width, new_height);
     if (!scaled)
         return NULL; // Handle allocation failure
 
@@ -130,8 +138,8 @@ PixelBuffer *scale_pixelbuffer(PixelBuffer *src, Vec2 scale)
             src_x = (src_x >= src->width) ? src->width - 1 : src_x;
             src_y = (src_y >= src->height) ? src->height - 1 : src_y;
 
-            uint32_t color = get_pixel(src, src_x, src_y);
-            set_pixel(scaled, x, y, color);
+            uint32_t color = pixel_buffer_get(src, src_x, src_y);
+            pixel_buffer_set(scaled, x, y, color);
         }
     }
 
@@ -155,7 +163,7 @@ PixelBuffer *rotate_pixelbuffer(PixelBuffer *src, float degrees)
     int max_dim = (int)ceil(sqrtf(w * w + h * h)) + 1;
 
     // Create a new PixelBuffer for the rotated image
-    PixelBuffer *rotated = create_pixel_buffer(max_dim, max_dim);
+    PixelBuffer *rotated = pixel_buffer_new(max_dim, max_dim);
     if (!rotated)
         return NULL; // Handle allocation failure
 
@@ -178,13 +186,13 @@ PixelBuffer *rotate_pixelbuffer(PixelBuffer *src, float degrees)
             // Check if the source pixel is within the bounds of the source image
             if (sx >= 0 && sx < w && sy >= 0 && sy < h)
             {
-                uint32_t color = get_pixel(src, sx, sy);
-                set_pixel(rotated, x, y, color);
+                uint32_t color = pixel_buffer_get(src, sx, sy);
+                pixel_buffer_set(rotated, x, y, color);
             }
             else
             {
                 // Set to transparent or background color if out of bounds
-                set_pixel(rotated, x, y, 0x00000000); // Assuming ARGB format
+                pixel_buffer_set(rotated, x, y, 0x00000000); // Assuming ARGB format
             }
         }
     }
@@ -212,8 +220,8 @@ void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
     {
         for (int i = x0; i < x1; i++)
         {
-            uint32_t src_color = get_pixel(src, i - x, j - y);
-            uint32_t dst_color = get_pixel(dst, i, j);
+            uint32_t src_color = pixel_buffer_get(src, i - x, j - y);
+            uint32_t dst_color = pixel_buffer_get(dst, i, j);
 
             // Extract color components and alpha, assume RGBA
             uint8_t src_r = (src_color >> 24) & 0xFF;
@@ -224,7 +232,7 @@ void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
             // If source alpha is max, just copy the source pixel
             if (src_a == 255)
             {
-                set_pixel(dst, i, j, src_color);
+                pixel_buffer_set(dst, i, j, src_color);
             }
             else if (src_a > 0)
             { // Only blend if there's some opacity
@@ -255,7 +263,7 @@ void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
                 // Combine the blended components
                 uint32_t blended_color = (final_r << 24) | (final_g << 16) | (final_b << 8) | final_a;
 
-                set_pixel(dst, i, j, blended_color);
+                pixel_buffer_set(dst, i, j, blended_color);
             }
             // If src_a is 0, we don't need to do anything (keep destination pixel)
         }
@@ -276,7 +284,7 @@ void blit_with_scale(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale)
     blit(scaled, dst, pos.x, pos.y);
 
     // Clean up
-    destroy_pixel_buffer(scaled);
+    pixel_buffer_free(scaled);
 }
 
 void blit_with_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float angle, Vec2 center_of_rotation)
@@ -294,7 +302,7 @@ void blit_with_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float ang
     rotated_pos = vec2_sub(rotated_pos, center_to_new_target);
     blit(rotated, dst, rotated_pos.x, rotated_pos.y);
 
-    destroy_pixel_buffer(rotated);
+    pixel_buffer_free(rotated);
 }
 
 void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale, float angle, Vec2 center_of_rotation)
@@ -309,7 +317,7 @@ void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos,
 
     // Then rotate
     PixelBuffer *rotated = rotate_pixelbuffer(scaled, angle);
-    destroy_pixel_buffer(scaled);
+    pixel_buffer_free(scaled);
     if (!rotated)
         return; // Handle allocation failure
 
@@ -328,7 +336,7 @@ void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos,
     blit(rotated, dst, new_pos.x, new_pos.y);
 
     // Clean up
-    destroy_pixel_buffer(rotated);
+    pixel_buffer_free(rotated);
 }
 
 void blit_dumb(PixelBuffer *src, PixelBuffer *dst, int x, int y)
@@ -352,8 +360,8 @@ void blit_dumb(PixelBuffer *src, PixelBuffer *dst, int x, int y)
     {
         for (int i = x0; i < x1; i++)
         {
-            uint32_t src_color = get_pixel(src, i - x, j - y);
-            set_pixel(dst, i, j, src_color);
+            uint32_t src_color = pixel_buffer_get(src, i - x, j - y);
+            pixel_buffer_set(dst, i, j, src_color);
         }
     }
 }
@@ -395,7 +403,7 @@ PixelBuffer *load_pixelbuffer_from_png(const char *filename)
     }
 
     // allocate memory for the pixel buffer
-    PixelBuffer *buffer = create_pixel_buffer(width, height);
+    PixelBuffer *buffer = pixel_buffer_new(width, height);
     if (!buffer)
     {
         stbi_image_free(data);
@@ -448,13 +456,13 @@ void draw_outline(PixelBuffer *pb, uint32_t color)
 {
     for (int i = 0; i < pb->width; i++)
     {
-        set_pixel(pb, i, 0, color);
-        set_pixel(pb, i, pb->height - 1, color);
+        pixel_buffer_set(pb, i, 0, color);
+        pixel_buffer_set(pb, i, pb->height - 1, color);
     }
     for (int i = 0; i < pb->height; i++)
     {
-        set_pixel(pb, 0, i, color);
-        set_pixel(pb, pb->width - 1, i, color);
+        pixel_buffer_set(pb, 0, i, color);
+        pixel_buffer_set(pb, pb->width - 1, i, color);
     }
 }
 
@@ -497,7 +505,7 @@ void blit_letter(PixelBuffer *target_pb, PixelBuffer *letters_pb, uint8_t ascii_
         for (int cx = 0; cx < char_width; cx++)
         {
             // Get the color from the source (letters) pixel buffer
-            uint32_t sample_color = get_pixel(letters_pb, src_x + cx, src_y + cy);
+            uint32_t sample_color = pixel_buffer_get(letters_pb, src_x + cx, src_y + cy);
 
             // Only copy non-transparent pixels (assuming black is transparent in charmap)
             if (sample_color != 0x000000FF)
@@ -509,7 +517,7 @@ void blit_letter(PixelBuffer *target_pb, PixelBuffer *letters_pb, uint8_t ascii_
                     {
                         int target_x = x + (cx * size) + sx;
                         int target_y = y + (cy * size) + sy;
-                        set_pixel(target_pb, target_x, target_y, color);
+                        pixel_buffer_set(target_pb, target_x, target_y, color);
                     }
                 }
             }

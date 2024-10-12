@@ -18,7 +18,7 @@ void draw_line(PixelBuffer *pb, int x0, int y0, int x1, int y1, uint32_t color)
 
     while (1)
     {
-        set_pixel(pb, x0, y0, color);
+        pixel_buffer_set(pb, x0, y0, color);
 
         if (x0 == x1 && y0 == y1)
         {
@@ -57,7 +57,7 @@ void draw_rect(PixelBuffer *pb, int x, int y, int w, int h, uint32_t color)
     {
         for (int j = y; j < y + h; j++)
         {
-            set_pixel(pb, i, j, color);
+            pixel_buffer_set_alpha(pb, i, j, color);
         }
     }
 }
@@ -118,7 +118,7 @@ void draw_triangle(PixelBuffer *pb, Triangle t, uint32_t color)
             {
                 if (w1 <= 0 && w2 <= 0 && w3 <= 0)
                 {
-                    set_pixel_alpha(pb, p.x, p.y, color);
+                    pixel_buffer_set_alpha(pb, p.x, p.y, color);
                 }
             }
         }
@@ -173,7 +173,7 @@ void draw_triangle_centroid_z_per_pixel_z_check(PixelBuffer *pb, FTexture *z_buf
                     float z_buffer_value = f_texture_get(z_buffer, p.x, p.y);
                     if (z > 80.0f && z < z_buffer_value)
                     {
-                        set_pixel_alpha(pb, p.x, p.y, color);
+                        pixel_buffer_set_alpha(pb, p.x, p.y, color);
                         f_texture_set(z_buffer, p.x, p.y, z);
                     }
                 }
@@ -254,8 +254,76 @@ void draw_triangle_scanline_constant_z(PixelBuffer *pb, FTexture *z_buffer, Tria
             float z_buffer_value = f_texture_get(z_buffer, x, y);
             if (z < z_buffer_value)
             {
-                set_pixel_alpha(pb, x, y, color);
+                pixel_buffer_set_alpha(pb, x, y, color);
                 f_texture_set(z_buffer, x, y, z);
+            }
+        }
+    }
+}
+
+void draw_triangle_scanline_constant_z_with_face_buffer(
+    PixelBuffer *pb,
+    FTexture *z_buffer,
+    Triangle t,
+    uint32_t color,
+    float z,
+    PixelBuffer *face_buffer,
+    uint32_t face)
+{
+    Vec2 v0 = t.p1;
+    Vec2 v1 = t.p2;
+    Vec2 v2 = t.p3;
+
+    // Sort vertices by Y-coordinate ascending
+    sort_vertices_by_y(&v0, &v1, &v2);
+
+    // Compute inverse slopes
+    // float inv_slope_1 = 0, inv_slope_2 = 0;
+
+    // Calculate the height of the triangle
+    float total_height = v2.y - v0.y;
+    if (total_height == 0)
+        return; // Degenerate triangle
+
+    // Rasterize the triangle
+    for (int y = (int)ceilf(v0.y); y <= (int)floorf(v2.y); y++)
+    {
+        bool second_half = y > v1.y || v1.y == v0.y;
+        float segment_height = second_half ? v2.y - v1.y : v1.y - v0.y;
+        if (segment_height == 0)
+            continue; // Avoid division by zero
+
+        float alpha = (y - v0.y) / total_height;
+        float beta = (y - (second_half ? v1.y : v0.y)) / segment_height;
+
+        Vec2 A = {v0.x + (v2.x - v0.x) * alpha, (float)y};
+        Vec2 B = second_half ? (Vec2){v1.x + (v2.x - v1.x) * beta, (float)y}
+                             : (Vec2){v0.x + (v1.x - v0.x) * beta, (float)y};
+
+        // Ensure A.x <= B.x
+        if (A.x > B.x)
+        {
+            Vec2 temp = A;
+            A = B;
+            B = temp;
+        }
+
+        // Clip X coordinates to screen bounds
+        int x_start = (int)ceilf(fmaxf(A.x, 0));
+        int x_end = (int)floorf(fminf(B.x, pb->width - 1));
+
+        if (y < 0 || y >= pb->height)
+            continue;
+
+        for (int x = x_start; x <= x_end; x++)
+        {
+            // Z-buffer check and update
+            float z_buffer_value = f_texture_get(z_buffer, x, y);
+            if (z < z_buffer_value)
+            {
+                pixel_buffer_set_alpha(pb, x, y, color);
+                f_texture_set(z_buffer, x, y, z);
+                pixel_buffer_set(face_buffer, x, y, face);
             }
         }
     }
@@ -298,23 +366,23 @@ void draw_grid_dots(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32
     {
         for (int y = start.y; y < end.y + 1; y += spacing)
         {
-            set_pixel(pb, x, y, color);
+            pixel_buffer_set(pb, x, y, color);
         }
     }
 
     // draw the rightmost and bottommost line of dots
     for (int x = start.x; x < end.x; x += spacing)
     {
-        set_pixel(pb, x, end.y, color);
+        pixel_buffer_set(pb, x, end.y, color);
     }
 
     for (int y = start.y; y < end.y; y += spacing)
     {
-        set_pixel(pb, end.x, y, color);
+        pixel_buffer_set(pb, end.x, y, color);
     }
 
     // bottom right corner
-    set_pixel(pb, end.x, end.y, color);
+    pixel_buffer_set(pb, end.x, end.y, color);
 }
 
 // draw_checkerboard
@@ -363,7 +431,7 @@ void draw_points(PixelBuffer *pb, SFA *points, uint32_t color)
     {
         int x = points->data[i];
         int y = points->data[i + 1];
-        set_pixel(pb, x, y, color);
+        pixel_buffer_set(pb, x, y, color);
     }
 }
 
@@ -414,7 +482,12 @@ void draw_tris_with_colors(PixelBuffer *pb, SFA *vertices, SU32A *indices, SU32A
     if the z value of the pixel is less than the z value in the z buffer we will draw the pixel and update the z buffer
     else we will skip the pixel
 */
-void draw_tris_with_colors_and_depth(PixelBuffer *pb, FTexture *z_buffer, SFA *vertices, SU32A *indices, SU32A *colors)
+void draw_tris_with_colors_and_depth(
+    PixelBuffer *pb,
+    FTexture *z_buffer,
+    SFA *vertices,
+    SU32A *indices,
+    SU32A *colors)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -460,6 +533,62 @@ void draw_tris_with_colors_and_depth(PixelBuffer *pb, FTexture *z_buffer, SFA *v
         // draw the triangle
         // draw_triangle_centroid_z_per_pixel_z_check(pb, z_buffer, t, color, z);
         draw_triangle_scanline_constant_z(pb, z_buffer, t, color, z);
+    }
+}
+
+// identical but puts the face index in the face buffer for each pixel
+void draw_tris_with_colors_and_depth_with_face_buffer(
+    PixelBuffer *pb,
+    FTexture *z_buffer,
+    PixelBuffer *face_buffer,
+    SFA *vertices,
+    SU32A *indices,
+    SU32A *colors)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {vertices->data[idx1 * 3], vertices->data[idx1 * 3 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 3], vertices->data[idx2 * 3 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 3], vertices->data[idx3 * 3 + 1]};
+
+        // skip if all the verts are off screen
+        if (p1.x < 0 && p2.x < 0 && p3.x < 0)
+        {
+            continue;
+        }
+        if (p1.x >= pb->width && p2.x >= pb->width && p3.x >= pb->width)
+        {
+            continue;
+        }
+        if (p1.y < 0 && p2.y < 0 && p3.y < 0)
+        {
+            continue;
+        }
+        if (p1.y >= pb->height && p2.y >= pb->height && p3.y >= pb->height)
+        {
+            continue;
+        }
+
+        // skip if they are too close to the camera
+        const float near = 40.0f;
+        if (vertices->data[idx1 * 3 + 2] < near && vertices->data[idx2 * 3 + 2] < near && vertices->data[idx3 * 3 + 2] < near)
+        {
+            continue;
+        }
+
+        Triangle t = {p1, p2, p3};
+        uint32_t color = colors->data[i / 3];
+
+        // average the z values of the 3 vertices
+        float z = (vertices->data[idx1 * 3 + 2] + vertices->data[idx2 * 3 + 2] + vertices->data[idx3 * 3 + 2]) / 3.0f;
+
+        // draw the triangle
+        uint32_t face = i / 3;
+        draw_triangle_scanline_constant_z_with_face_buffer(pb, z_buffer, t, color, z, face_buffer, face);
     }
 }
 

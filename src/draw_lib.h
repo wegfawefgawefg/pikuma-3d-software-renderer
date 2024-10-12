@@ -30,6 +30,22 @@ void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices
 void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SU32A *indices, SU32A *colors, uint32_t size, uint32_t color);
 void draw_tris_with_colors_and_depth(PixelBuffer *pb, FTexture *z_buffer, SFA *vertices, SU32A *indices, SU32A *colors);
 
+void draw_tris_with_colors_and_depth_with_face_buffer(
+    PixelBuffer *pb,
+    FTexture *z_buffer,
+    PixelBuffer *face_buffer,
+    SFA *vertices,
+    SU32A *indices,
+    SU32A *colors);
+void draw_triangle_scanline_constant_z_with_face_buffer(
+    PixelBuffer *pb,
+    FTexture *z_buffer,
+    Triangle t,
+    uint32_t color,
+    float z,
+    PixelBuffer *face_buffer,
+    uint32_t face);
+
 //////////////////////// ORTHOGRAPHIC PROJECTION ////////////////////////
 void draw_ortho_quad_lines(PixelBuffer *pb, Quad *quad, uint32_t color);
 void draw_ortho_quad(PixelBuffer *pb, Quad *quad, uint32_t color);

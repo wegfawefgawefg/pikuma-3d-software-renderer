@@ -4,7 +4,7 @@
 
 #include "utils.h"
 
-SizedSDLTexture *load_sized_sdl_texture(const char *filename, SDL_Renderer *renderer)
+SizedSDLTexture *sized_sdl_texture_load(const char *filename, SDL_Renderer *renderer)
 {
     SDL_Surface *surface = IMG_Load(filename);
     if (!surface)
@@ -31,87 +31,134 @@ SizedSDLTexture *load_sized_sdl_texture(const char *filename, SDL_Renderer *rend
     return sized_sdl_texture;
 }
 
-void destroy_sized_sdl_texture(SizedSDLTexture *sized_sdl_texture)
+void sized_sdl_texture_free(SizedSDLTexture *sized_sdl_texture)
 {
     SDL_DestroyTexture(sized_sdl_texture->texture);
     free(sized_sdl_texture);
 }
 
-// typedef struct
-// {
-//     SizedSDLTexture *gba_overlay;
-//     SizedSDLTexture *gba_power_light;
-//     SizedSDLTexture *pointer_sized_sdl_texture;
-//     PixelBuffer *pointer_pixel_buffer;
-// } Assets;
+#include <stdbool.h>
+
+typedef struct
+{
+    bool success;
+    const char *error_message;
+} LoadResult;
+
+LoadResult load_texture(SizedSDLTexture **texture, const char *path, SDL_Renderer *renderer)
+{
+    *texture = sized_sdl_texture_load(path, renderer);
+    if (!*texture)
+    {
+        return (LoadResult){false, path};
+    }
+    return (LoadResult){true, NULL};
+}
+
+LoadResult load_pixel_buffer(PixelBuffer **buffer, const char *path)
+{
+    *buffer = load_pixelbuffer_from_png(path);
+    if (!*buffer)
+    {
+        return (LoadResult){false, path};
+    }
+    return (LoadResult){true, NULL};
+}
+
+LoadResult load_mesh(Mesh **mesh, const char *path)
+{
+    *mesh = mesh_load_from_obj(path);
+    if (!*mesh)
+    {
+        return (LoadResult){false, path};
+    }
+    return (LoadResult){true, NULL};
+}
 
 Assets *load_assets(SDL_Renderer *renderer)
 {
     Assets *assets = (Assets *)malloc(sizeof(Assets));
-
-    assets->gba_overlay = load_sized_sdl_texture("./assets/textures/Clear-Purple-Shell-Game-Boy-Advance.png", renderer);
-    if (!assets->gba_overlay)
+    if (!assets)
     {
-        printf("Failed to load gba overlay\n");
+        fprintf(stderr, "Failed to allocate memory for assets\n");
         return NULL;
     }
 
-    assets->gba_power_light = load_sized_sdl_texture("./assets/textures/gbalight.png", renderer);
-    if (!assets->gba_power_light)
-    {
-        printf("Failed to load gba power light\n");
-        return NULL;
+    LoadResult result;
+    const char *error_message = NULL;
+
+#define LOAD_TEXTURE(resource, path)                          \
+    result = load_texture(&assets->resource, path, renderer); \
+    if (!result.success)                                      \
+    {                                                         \
+        error_message = result.error_message;                 \
+        goto cleanup;                                         \
     }
 
-    assets->pointer_sized_sdl_texture = load_sized_sdl_texture("./assets/textures/pointer.png", renderer);
-    if (!assets->pointer_sized_sdl_texture)
-    {
-        printf("Failed to load pointer\n");
-        return NULL;
+#define LOAD_PIXEL_BUFFER(resource, path)                \
+    result = load_pixel_buffer(&assets->resource, path); \
+    if (!result.success)                                 \
+    {                                                    \
+        error_message = result.error_message;            \
+        goto cleanup;                                    \
     }
 
-    assets->pointer_pixel_buffer = load_pixelbuffer_from_png("./assets/textures/pointer.png");
-    if (!assets->pointer_pixel_buffer)
-    {
-        printf("Failed to load pointer into pixel buffer\n");
-        return NULL;
+#define LOAD_MESH(resource, path)                \
+    result = load_mesh(&assets->resource, path); \
+    if (!result.success)                         \
+    {                                            \
+        error_message = result.error_message;    \
+        goto cleanup;                            \
     }
 
-    // Load the OBJ model into the Mesh structure
-    assets->gba_mesh = load_obj_to_mesh("assets/models/gba.obj");
-    if (!assets->gba_mesh)
-    {
-        fprintf(stderr, "Failed to load gba.obj model\n");
-        // Handle error as needed
-    }
+    LOAD_TEXTURE(gba_overlay, "./assets/textures/Clear-Purple-Shell-Game-Boy-Advance.png")
+    LOAD_TEXTURE(gba_power_light, "./assets/textures/gbalight.png")
+    LOAD_TEXTURE(pointer_sized_sdl_texture, "./assets/textures/pointer.png")
+    LOAD_PIXEL_BUFFER(pointer_pixel_buffer, "./assets/textures/pointer.png")
+    LOAD_MESH(gba_mesh, "assets/models/gba.obj")
+    LOAD_PIXEL_BUFFER(charmap_white, "./assets/charmap_white.png")
+    LOAD_MESH(jet_plane_mesh, "assets/models/f22.obj")
+    LOAD_MESH(cube_mesh, "assets/models/cube.obj")
 
-    // print out how many vertices and indices are in the gba mesh,
-    // colors is the number of faces
-
+    // Print mesh info
     printf("gba mesh has %d vertices, %d indices, %d faces, %d colors\n",
            assets->gba_mesh->vertices->length / 3,
            assets->gba_mesh->indices->length,
            assets->gba_mesh->indices->length / 3,
            assets->gba_mesh->colors->length);
 
-    // load the charmap
-    assets->charmap_white = load_pixelbuffer_from_png("./assets/charmap_white.png");
-    if (!assets->charmap_white)
-    {
-        printf("Failed to load charmap_white\n");
-        return NULL;
-    }
-
     return assets;
+
+cleanup:
+    fprintf(stderr, "Failed to load %s\n", error_message);
+    // Free all allocated resources
+    if (assets->gba_overlay)
+        sized_sdl_texture_free(assets->gba_overlay);
+    if (assets->gba_power_light)
+        sized_sdl_texture_free(assets->gba_power_light);
+    if (assets->pointer_sized_sdl_texture)
+        sized_sdl_texture_free(assets->pointer_sized_sdl_texture);
+    if (assets->pointer_pixel_buffer)
+        pixel_buffer_free(assets->pointer_pixel_buffer);
+    if (assets->gba_mesh)
+        mesh_free(assets->gba_mesh);
+    if (assets->charmap_white)
+        pixel_buffer_free(assets->charmap_white);
+    if (assets->jet_plane_mesh)
+        mesh_free(assets->jet_plane_mesh);
+    if (assets->cube_mesh)
+        mesh_free(assets->cube_mesh);
+    free(assets);
+    return NULL;
 }
 
 void destroy_assets(Assets *assets)
 {
-    destroy_sized_sdl_texture(assets->gba_overlay);
-    destroy_sized_sdl_texture(assets->gba_power_light);
-    destroy_sized_sdl_texture(assets->pointer_sized_sdl_texture);
-    destroy_pixel_buffer(assets->pointer_pixel_buffer);
-    destroy_pixel_buffer(assets->charmap_white);
+    sized_sdl_texture_free(assets->gba_overlay);
+    sized_sdl_texture_free(assets->gba_power_light);
+    sized_sdl_texture_free(assets->pointer_sized_sdl_texture);
+    pixel_buffer_free(assets->pointer_pixel_buffer);
+    pixel_buffer_free(assets->charmap_white);
     mesh_free(assets->gba_mesh);
     free(assets);
 }
@@ -149,7 +196,7 @@ void replace_extension_with_col(const char *filename, char *col_filename, size_t
 }
 
 // Function to load the OBJ model into a Mesh structure
-Mesh *load_obj_to_mesh(const char *filename)
+Mesh *mesh_load_from_obj(const char *filename)
 {
     FILE *file = fopen(filename, "r");
     if (!file)

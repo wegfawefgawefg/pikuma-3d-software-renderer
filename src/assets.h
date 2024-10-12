@@ -16,10 +16,10 @@ typedef struct // sized sdl texture
     int height;
 } SizedSDLTexture;
 
-SizedSDLTexture *load_sized_sdl_texture(const char *filename, SDL_Renderer *renderer);
-void destroy_sized_sdl_texture(SizedSDLTexture *sized_sdl_texture);
+SizedSDLTexture *sized_sdl_texture_load(const char *filename, SDL_Renderer *renderer);
+void sized_sdl_texture_free(SizedSDLTexture *sized_sdl_texture);
 
-Mesh *load_obj_to_mesh(const char *filename);
+Mesh *mesh_load_from_obj(const char *filename);
 
 // defs for the assets, such as gba overlay, gba power light, pointer
 typedef struct
@@ -28,6 +28,8 @@ typedef struct
     SizedSDLTexture *gba_power_light;
     SizedSDLTexture *pointer_sized_sdl_texture;
     Mesh *gba_mesh;
+    Mesh *jet_plane_mesh;
+    Mesh *cube_mesh;
     PixelBuffer *pointer_pixel_buffer;
     PixelBuffer *charmap_white;
 } Assets;
