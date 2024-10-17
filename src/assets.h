@@ -28,6 +28,7 @@ typedef struct
     SizedSDLTexture *gba_power_light;
     SizedSDLTexture *pointer_sized_sdl_texture;
     Mesh *gba_mesh;
+    PixelBuffer *gba_texture;
     Mesh *jet_plane_mesh;
     Mesh *cube_mesh;
     PixelBuffer *pointer_pixel_buffer;

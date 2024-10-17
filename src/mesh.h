@@ -10,12 +10,17 @@
 typedef struct
 {
     SFA *vertices;  // Vertex data
-    SU32A *indices; // Index data
-    SU32A *colors;  // Color data
+    SFA *normals;   // Normal data
+    SFA *texcoords; // Texture coordinate data
+
+    SU32A *vertex_indices;   // Index data
+    SU32A *normal_indices;   // Normal index data
+    SU32A *texcoord_indices; // Texture coordinate index data
+    SU32A *colors;           // Color data
 } Mesh;
 
 // Function to create and free Mesh
-Mesh *mesh_new(int vertex_length, int index_length);
+Mesh *mesh_new(void);
 Mesh *mesh_copy(const Mesh *mesh);
 void mesh_free(Mesh *mesh);
 

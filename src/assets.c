@@ -52,6 +52,10 @@ LoadResult load_texture(SizedSDLTexture **texture, const char *path, SDL_Rendere
     {
         return (LoadResult){false, path};
     }
+
+    // print info on the texture, like Loaded Texture: path: path, width: %d, height: %d
+    printf("\033[0;32mLoaded Texture: \033[0mpath: %s, width: %d, height: %d\n", path, (*texture)->width, (*texture)->height);
+
     return (LoadResult){true, NULL};
 }
 
@@ -62,6 +66,9 @@ LoadResult load_pixel_buffer(PixelBuffer **buffer, const char *path)
     {
         return (LoadResult){false, path};
     }
+
+    // print info on the pixel buffer, like Loaded PixelBuffer: path: path, width: %d, height: %d
+    printf("\033[0;32mLoaded PixelBuffer: \033[0mpath: %s, width: %d, height: %d\n", path, (*buffer)->width, (*buffer)->height);
     return (LoadResult){true, NULL};
 }
 
@@ -72,6 +79,16 @@ LoadResult load_mesh(Mesh **mesh, const char *path)
     {
         return (LoadResult){false, path};
     }
+
+    // print info on the mesh, like Loaded Mesh: path: path, and the other lengths tabbed over on the next lines
+    printf("\033[0;32mLoaded Mesh: \033[0mpath: %s,\n", path);
+    printf("\tVertices: %d\n", (*mesh)->vertices->length / 3);
+    printf("\tNormals: %d\n", (*mesh)->normals->length / 3);
+    printf("\tTexcoords: %d\n", (*mesh)->texcoords->length / 2);
+    printf("\tVertex Indices: %d\n", (*mesh)->vertex_indices->length);
+    printf("\tNormal Indices: %d\n", (*mesh)->normal_indices->length);
+    printf("\tTexcoord Indices: %d\n", (*mesh)->texcoord_indices->length);
+
     return (LoadResult){true, NULL};
 }
 
@@ -115,17 +132,11 @@ Assets *load_assets(SDL_Renderer *renderer)
     LOAD_TEXTURE(gba_power_light, "./assets/textures/gbalight.png")
     LOAD_TEXTURE(pointer_sized_sdl_texture, "./assets/textures/pointer.png")
     LOAD_PIXEL_BUFFER(pointer_pixel_buffer, "./assets/textures/pointer.png")
+    LOAD_PIXEL_BUFFER(gba_texture, "./assets/textures/gba_smol_crunchy.png")
     LOAD_MESH(gba_mesh, "assets/models/gba.obj")
     LOAD_PIXEL_BUFFER(charmap_white, "./assets/charmap_white.png")
     LOAD_MESH(jet_plane_mesh, "assets/models/f22.obj")
     LOAD_MESH(cube_mesh, "assets/models/cube.obj")
-
-    // Print mesh info
-    printf("gba mesh has %d vertices, %d indices, %d faces, %d colors\n",
-           assets->gba_mesh->vertices->length / 3,
-           assets->gba_mesh->indices->length,
-           assets->gba_mesh->indices->length / 3,
-           assets->gba_mesh->colors->length);
 
     return assets;
 
@@ -142,6 +153,8 @@ cleanup:
         pixel_buffer_free(assets->pointer_pixel_buffer);
     if (assets->gba_mesh)
         mesh_free(assets->gba_mesh);
+    if (assets->gba_texture)
+        pixel_buffer_free(assets->gba_texture);
     if (assets->charmap_white)
         pixel_buffer_free(assets->charmap_white);
     if (assets->jet_plane_mesh)
@@ -195,7 +208,10 @@ void replace_extension_with_col(const char *filename, char *col_filename, size_t
     strncat(col_filename, ".col", size - strlen(col_filename) - 1);
 }
 
-// Function to load the OBJ model into a Mesh structure
+/*
+    Load a mesh from an OBJ file.
+    Also loads colors from a corresponding .col file.
+*/
 Mesh *mesh_load_from_obj(const char *filename)
 {
     FILE *file = fopen(filename, "r");
@@ -205,18 +221,26 @@ Mesh *mesh_load_from_obj(const char *filename)
         return NULL;
     }
 
-    Mesh *mesh = mesh_new(0, 0);
+    Mesh *mesh = mesh_new();
     if (!mesh)
     {
         fclose(file);
         return NULL;
     }
 
+    // allocate
     char line[256];
-    // Temporary storage for vertices and indices
-    SFA *vertices = sfa_new(0);
-    SU32A *indices = su32a_new(0);
-    if (!vertices || !indices)
+    mesh->vertices = sfa_new(0);
+    mesh->normals = sfa_new(0);
+    mesh->texcoords = sfa_new(0);
+    mesh->vertex_indices = su32a_new(0);
+    mesh->normal_indices = su32a_new(0);
+    mesh->texcoord_indices = su32a_new(0);
+    mesh->colors = su32a_new(0);
+
+    // check allocations
+    if (!mesh->vertices || !mesh->normals || !mesh->texcoords ||
+        !mesh->vertex_indices || !mesh->normal_indices || !mesh->texcoord_indices)
     {
         fprintf(stderr, "Failed to allocate temporary arrays for OBJ parsing\n");
         fclose(file);
@@ -225,9 +249,11 @@ Mesh *mesh_load_from_obj(const char *filename)
     }
 
     // Read the OBJ file line by line
+    // v: vertex, vn: normal, vt: texcoord, f: face
     while (fgets(line, sizeof(line), file))
     {
         char *trimmed = trim_whitespace(line);
+        // v: vertex
         if (trimmed[0] == 'v' && trimmed[1] == ' ')
         {
             // Vertex position
@@ -235,115 +261,177 @@ Mesh *mesh_load_from_obj(const char *filename)
             if (sscanf(trimmed, "v %f %f %f", &x, &y, &z) == 3)
             {
                 // Append to vertices
-                int current_length = vertices->length;
-                vertices->length += 3;
-                float *new_data = realloc(vertices->data, sizeof(float) * vertices->length);
+                mesh->vertices->length += 3;
+                float *new_data = realloc(mesh->vertices->data, sizeof(float) * mesh->vertices->length);
                 if (!new_data)
                 {
                     fprintf(stderr, "Failed to realloc vertices data\n");
-                    sfa_free(vertices);
-                    su32a_free(indices);
                     fclose(file);
                     mesh_free(mesh);
                     return NULL;
                 }
-                vertices->data = new_data;
-                vertices->data[current_length] = x;
-                vertices->data[current_length + 1] = y;
-                vertices->data[current_length + 2] = z;
+                mesh->vertices->data = new_data;
+                const int latest_batch_start_index = mesh->vertices->length - 3;
+                mesh->vertices->data[latest_batch_start_index] = x;
+                mesh->vertices->data[latest_batch_start_index + 1] = y;
+                mesh->vertices->data[latest_batch_start_index + 2] = z;
             }
             else
             {
                 fprintf(stderr, "Invalid vertex format: %s\n", trimmed);
             }
         }
-        else if (trimmed[0] == 'f' && trimmed[1] == ' ')
+        // vn: normal
+        else if (trimmed[0] == 'v' && trimmed[1] == 'n')
         {
-            // Face definition
-            unsigned int v_indices[4] = {0};
-            int vertex_count = 0;
-
-            // Pointer to the face line, skip 'f '
-            char *ptr = trimmed + 2;
-            char *token;
-
-            // Tokenize the face line by spaces
-            while ((token = strtok_r(ptr, " ", &ptr)) != NULL)
+            // Vertex normal
+            float nx, ny, nz;
+            if (sscanf(trimmed, "vn %f %f %f", &nx, &ny, &nz) == 3)
             {
-                unsigned int v_idx = 0;
-                // Extract the vertex index before the first '/'
-                if (sscanf(token, "%u", &v_idx) == 1)
-                {
-                    // Vertex index only
-                }
-                else if (sscanf(token, "%u/%*s", &v_idx) == 1)
-                {
-                    // Vertex index with slashes
-                }
-                else
-                {
-                    fprintf(stderr, "Invalid face format: %s\n", token);
-                    continue;
-                }
-
-                // Subtract 1 to convert from 1-based to 0-based indexing
-                if (v_idx == 0)
-                {
-                    fprintf(stderr, "Face vertex index is zero, which is invalid: %s\n", token);
-                    continue;
-                }
-
-                v_indices[vertex_count++] = v_idx - 1;
-
-                // Check if we have more than 3 vertices (e.g., quads)
-                if (vertex_count >= 4)
-                {
-                    fprintf(stderr, "Warning: Face has more than 3 vertices, triangulating\n");
-                }
-            }
-
-            // Triangulate the face if necessary
-            for (int i = 1; i < vertex_count - 1; ++i)
-            {
-                int current_length = indices->length;
-                indices->length += 3;
-                uint32_t *new_data = realloc(indices->data, sizeof(uint32_t) * indices->length);
+                // Append to normals
+                mesh->normals->length += 3;
+                float *new_data = realloc(mesh->normals->data, sizeof(float) * mesh->normals->length);
                 if (!new_data)
                 {
-                    fprintf(stderr, "Failed to realloc indices data\n");
-                    sfa_free(vertices);
-                    su32a_free(indices);
+                    fprintf(stderr, "Failed to realloc normals data\n");
                     fclose(file);
                     mesh_free(mesh);
                     return NULL;
                 }
-                indices->data = new_data;
-                indices->data[current_length] = v_indices[0];
-                indices->data[current_length + 1] = v_indices[i];
-                indices->data[current_length + 2] = v_indices[i + 1];
+                mesh->normals->data = new_data;
+                const int latest_batch_start_index = mesh->normals->length - 3;
+                mesh->normals->data[latest_batch_start_index] = nx;
+                mesh->normals->data[latest_batch_start_index + 1] = ny;
+                mesh->normals->data[latest_batch_start_index + 2] = nz;
+            }
+            else
+            {
+                fprintf(stderr, "Invalid normal format: %s\n", trimmed);
             }
         }
-        // You can extend this to handle other prefixes like 'vn', 'vt', etc.
+        // vt: texcoord
+        else if (trimmed[0] == 'v' && trimmed[1] == 't')
+        {
+            // Texture coordinate
+            float u, v;
+            if (sscanf(trimmed, "vt %f %f", &u, &v) == 2)
+            {
+                // Append to texcoords
+                mesh->texcoords->length += 2;
+                float *new_data = realloc(mesh->texcoords->data, sizeof(float) * mesh->texcoords->length);
+                if (!new_data)
+                {
+                    fprintf(stderr, "Failed to realloc texcoords data\n");
+                    fclose(file);
+                    mesh_free(mesh);
+                    return NULL;
+                }
+                mesh->texcoords->data = new_data;
+                const int latest_batch_start_index = mesh->texcoords->length - 2;
+                mesh->texcoords->data[latest_batch_start_index] = u;
+                mesh->texcoords->data[latest_batch_start_index + 1] = v;
+            }
+            else
+            {
+                fprintf(stderr, "Invalid texture coordinate format: %s\n", trimmed);
+            }
+        }
+        // f: face
+        else if (trimmed[0] == 'f' && trimmed[1] == ' ')
+        {
+            // Face definition
+            // OBJ faces can have different formats:
+            // f v1 v2 v3
+            // f v1/vt1 v2/vt2 v3/vt3
+            // f v1//vn1 v2//vn2 v3//vn3
+            // f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
+            // We will only handle the last format
+
+            int v0, v1, v2;
+            int vt0, vt1, vt2;
+            int vn0, vn1, vn2;
+            // scanf the big one
+            if (sscanf(trimmed, "f %d/%d/%d %d/%d/%d %d/%d/%d",
+                       &v0, &vt0, &vn0,
+                       &v1, &vt1, &vn1,
+                       &v2, &vt2, &vn2) == 9)
+            {
+
+                // Subtract 1 to convert from 1-based to 0-based indexing
+                v0--;
+                v1--;
+                v2--;
+                vt0--;
+                vt1--;
+                vt2--;
+                vn0--;
+                vn1--;
+                vn2--;
+
+                // Append to vertex_indices
+                mesh->vertex_indices->length += 3;
+                uint32_t *new_data_v = realloc(mesh->vertex_indices->data, sizeof(uint32_t) * mesh->vertex_indices->length);
+                if (!new_data_v)
+                {
+                    fprintf(stderr, "Failed to realloc vertex_indices data\n");
+                    fclose(file);
+                    mesh_free(mesh);
+                    return NULL;
+                }
+                mesh->vertex_indices->data = new_data_v;
+                const int latest_batch_start_index_v = mesh->vertex_indices->length - 3;
+                mesh->vertex_indices->data[latest_batch_start_index_v] = v0;
+                mesh->vertex_indices->data[latest_batch_start_index_v + 1] = v1;
+                mesh->vertex_indices->data[latest_batch_start_index_v + 2] = v2;
+
+                // Append to texcoord_indices
+                mesh->texcoord_indices->length += 3;
+                uint32_t *new_data_vt = realloc(mesh->texcoord_indices->data, sizeof(uint32_t) * mesh->texcoord_indices->length);
+                if (!new_data_vt)
+                {
+                    fprintf(stderr, "Failed to realloc texcoord_indices data\n");
+                    fclose(file);
+                    mesh_free(mesh);
+                    return NULL;
+                }
+                mesh->texcoord_indices->data = new_data_vt;
+                const int latest_batch_start_index_vt = mesh->texcoord_indices->length - 3;
+                mesh->texcoord_indices->data[latest_batch_start_index_vt] = vt0;
+                mesh->texcoord_indices->data[latest_batch_start_index_vt + 1] = vt1;
+                mesh->texcoord_indices->data[latest_batch_start_index_vt + 2] = vt2;
+
+                // Append to normal_indices
+                mesh->normal_indices->length += 3;
+                uint32_t *new_data_vn = realloc(mesh->normal_indices->data, sizeof(uint32_t) * mesh->normal_indices->length);
+                if (!new_data_vn)
+                {
+                    fprintf(stderr, "Failed to realloc normal_indices data\n");
+                    fclose(file);
+                    mesh_free(mesh);
+                    return NULL;
+                }
+                mesh->normal_indices->data = new_data_vn;
+                const int latest_batch_start_index_vn = mesh->normal_indices->length - 3;
+                mesh->normal_indices->data[latest_batch_start_index_vn] = vn0;
+                mesh->normal_indices->data[latest_batch_start_index_vn + 1] = vn1;
+                mesh->normal_indices->data[latest_batch_start_index_vn + 2] = vn2;
+            }
+
+            else
+            {
+                fprintf(stderr, "Invalid face format: %s\n", trimmed);
+            }
+        }
+        else
+        {
+            // what is this line?
+            // printf("Unknown line: %s\n", trimmed);
+        }
     }
 
     fclose(file);
 
-    // Assign parsed data to Mesh
-    mesh->vertices = vertices;
-    mesh->indices = indices;
-
-    // colors are loaded from the .col file
-    // each color is a single packed uint32_t
-    /*
-        ex:
-        255 0 0 255
-        0 255 0 255
-        0 0 255 255
-        and so on
-    */
-
-    // Load the colors from the .col file
-    // File name is same as .col. For example: gba.obj has a gba.col file
+    // Load colors from the .col file as per your original code
     char col_filename[512];
     replace_extension_with_col(filename, col_filename, sizeof(col_filename));
 
@@ -351,83 +439,81 @@ Mesh *mesh_load_from_obj(const char *filename)
     if (!col_file)
     {
         fprintf(stderr, "Failed to open color file: %s\n", col_filename);
-        // Depending on your requirements, you might want to free resources here
-        // For now, we'll proceed without colors
         mesh->colors = NULL;
-        return mesh;
-    }
-
-    SU32A *colors = su32a_new(0);
-    if (!colors)
-    {
-        fprintf(stderr, "Failed to allocate colors array\n");
-        fclose(col_file);
-        mesh_free(mesh);
-        return NULL;
-    }
-
-    int line_number = 0;
-    while (fgets(line, sizeof(line), col_file))
-    {
-        line_number++;
-        uint8_t r, g, b, a;
-        if (sscanf(line, "%hhu %hhu %hhu %hhu", &r, &g, &b, &a) == 4)
-        {
-            // Pack RGBA into a single uint32_t (e.g., ARGB format)
-            uint32_t packed_color = ((uint32_t)r << 24) |
-                                    ((uint32_t)g << 16) |
-                                    ((uint32_t)b << 8) |
-                                    ((uint32_t)a);
-
-            // Append to colors
-            int current_length = colors->length;
-            colors->length += 1;
-            uint32_t *new_data = realloc(colors->data, sizeof(uint32_t) * colors->length);
-            if (!new_data)
-            {
-                fprintf(stderr, "Failed to realloc colors data at line %d\n", line_number);
-                su32a_free(colors);
-                fclose(col_file);
-                mesh_free(mesh);
-                return NULL;
-            }
-            colors->data = new_data;
-            colors->data[current_length] = packed_color;
-        }
-        else
-        {
-            fprintf(stderr, "Failed to parse color at line %d: %s", line_number, line);
-            // Continue processing the next lines
-        }
-    }
-
-    fclose(col_file);
-
-    mesh->colors = colors;
-
-    // Validate the number of colors against the number of faces
-    if (mesh->indices->length == 0)
-    {
-        fprintf(stderr, "Mesh has no indices (faces) to associate colors with.\n");
     }
     else
     {
-        int expected_colors = mesh->indices->length / 3; // Assuming one color per triangle
-        int actual_colors = (colors->length);            // 1 uint32_t per color
-
-        if (actual_colors < expected_colors)
+        mesh->colors = su32a_new(0);
+        if (!mesh->colors)
         {
-            fprintf(stderr, "Not enough colors: expected %d, got %d\n", expected_colors, actual_colors);
+            fprintf(stderr, "Failed to allocate colors array\n");
+            fclose(col_file);
+            mesh_free(mesh);
+            return NULL;
         }
-        else if (actual_colors > expected_colors)
+
+        int line_number = 0;
+        while (fgets(line, sizeof(line), col_file))
         {
-            fprintf(stderr, "Too many colors: expected %d, got %d\n", expected_colors, actual_colors);
+            line_number++;
+            uint8_t r, g, b, a;
+            if (sscanf(line, "%hhu %hhu %hhu %hhu", &r, &g, &b, &a) == 4)
+            {
+                // Pack RGBA into a single uint32_t (e.g., ARGB format)
+                uint32_t packed_color = ((uint32_t)r << 24) |
+                                        ((uint32_t)g << 16) |
+                                        ((uint32_t)b << 8) |
+                                        ((uint32_t)a);
+
+                // Append to colors
+                mesh->colors->length += 1;
+                uint32_t *new_data = realloc(mesh->colors->data, sizeof(uint32_t) * mesh->colors->length);
+                if (!new_data)
+                {
+                    fprintf(stderr, "Failed to realloc colors data at line %d\n", line_number);
+                    fclose(col_file);
+                    mesh_free(mesh);
+                    return NULL;
+                }
+                mesh->colors->data = new_data;
+                const int last_color_index = mesh->colors->length - 1;
+                mesh->colors->data[last_color_index] = packed_color;
+            }
+            else
+            {
+                fprintf(stderr, "Failed to parse color at line %d: %s", line_number, line);
+                // Continue processing the next lines
+            }
+        }
+        fclose(col_file);
+
+        // Validate the number of colors against the number of faces
+        if (mesh->vertex_indices->length == 0)
+        {
+            fprintf(stderr, "Mesh has no vertex indices (faces) to associate colors with.\n");
         }
         else
         {
-            printf("Color count matches face count: %d colors for %d faces.\n", actual_colors, expected_colors);
+            int expected_colors = mesh->vertex_indices->length / 3; // Assuming one color per triangle
+            int actual_colors = mesh->colors->length;               // 1 uint32_t per color
+
+            if (actual_colors < expected_colors)
+            {
+                fprintf(stderr, "Not enough colors: expected %d, got %d\n", expected_colors, actual_colors);
+            }
+            else if (actual_colors > expected_colors)
+            {
+                fprintf(stderr, "Too many colors: expected %d, got %d\n", expected_colors, actual_colors);
+            }
+            else
+            {
+                printf("Color count matches face count: %d colors for %d faces.\n", actual_colors, expected_colors);
+            }
         }
     }
+
+    // Additional validation can be performed here, such as ensuring that
+    // the number of normals and texcoords match the number of vertices, etc.
 
     return mesh;
 }

@@ -5,55 +5,43 @@
 #include "utils.h"
 #include "mat4.h"
 
-// Create a new Mesh
-Mesh *mesh_new(int vertex_length, int index_length)
+Mesh *mesh_new(void)
 {
     Mesh *mesh = (Mesh *)malloc(sizeof(Mesh));
     if (!mesh)
         return NULL;
 
-    mesh->vertices = sfa_new(vertex_length);
-    if (!mesh->vertices)
-    {
-        free(mesh);
-        return NULL;
-    }
-
-    mesh->indices = su32a_new(index_length);
-    if (!mesh->indices)
-    {
-        sfa_free(mesh->vertices);
-        free(mesh);
-        return NULL;
-    }
-
-    int num_faces = index_length / 3;
-    // if index_length is zero set num_faces to 0
-    if (index_length == 0)
-    {
-        num_faces = 0;
-    }
-    mesh->colors = su32a_new(num_faces);
-    if (!mesh->colors)
-    {
-        sfa_free(mesh->vertices);
-        su32a_free(mesh->indices);
-        free(mesh);
-        return NULL;
-    }
+    mesh->vertices = NULL;
+    mesh->normals = NULL;
+    mesh->texcoords = NULL;
+    mesh->vertex_indices = NULL;
+    mesh->normal_indices = NULL;
+    mesh->texcoord_indices = NULL;
+    mesh->colors = NULL;
 
     return mesh;
 }
 
-// Free a Mesh
 void mesh_free(Mesh *mesh)
 {
     if (!mesh)
         return;
 
-    sfa_free(mesh->vertices);
-    su32a_free(mesh->indices);
-    su32a_free(mesh->colors);
+    if (mesh->vertices)
+        sfa_free(mesh->vertices);
+    if (mesh->normals)
+        sfa_free(mesh->normals);
+    if (mesh->texcoords)
+        sfa_free(mesh->texcoords);
+    if (mesh->vertex_indices)
+        su32a_free(mesh->vertex_indices);
+    if (mesh->normal_indices)
+        su32a_free(mesh->normal_indices);
+    if (mesh->texcoord_indices)
+        su32a_free(mesh->texcoord_indices);
+    if (mesh->colors)
+        su32a_free(mesh->colors);
+
     free(mesh);
 }
 
@@ -64,10 +52,10 @@ Mesh *mesh_prim_triangle(float size)
     // Number of vertices and indices for a tetrahedron
     const int num_vertices = 3;
     const int num_indices = 3; // 1 face * 3 indices per face
+    const int vertex_array_length = num_vertices * 3;
 
     // Allocate a new Mesh with space for vertices and indices
-    Mesh *mesh = mesh_new(num_vertices * 3, num_indices);
-
+    Mesh *mesh = mesh_new();
     if (!mesh)
     {
         // Handle allocation failure
@@ -84,6 +72,13 @@ Mesh *mesh_prim_triangle(float size)
     // Vertex 1: (-a, -a,  a)
     // Vertex 2: (-a,  a, -a)
 
+    mesh->vertices = sfa_new(vertex_array_length);
+    if (!mesh->vertices)
+    {
+        mesh_free(mesh);
+        return NULL;
+    }
+
     mesh->vertices->data[0] = a; // Vertex 0 X
     mesh->vertices->data[1] = a; // Vertex 0 Y
     mesh->vertices->data[2] = a; // Vertex 0 Z
@@ -98,9 +93,17 @@ Mesh *mesh_prim_triangle(float size)
 
     // Define indices for the three vertices
     // Each face is defined by three vertex indices
-    mesh->indices->data[0] = 0;
-    mesh->indices->data[1] = 1;
-    mesh->indices->data[2] = 2;
+
+    mesh->vertex_indices = su32a_new(num_indices);
+    if (!mesh->vertex_indices)
+    {
+        mesh_free(mesh);
+        return NULL;
+    }
+
+    mesh->vertex_indices->data[0] = 0;
+    mesh->vertex_indices->data[1] = 1;
+    mesh->vertex_indices->data[2] = 2;
 
     return mesh;
 }
@@ -110,11 +113,12 @@ Mesh *mesh_prim_cube(float size)
 {
     // Define the number of vertices and indices
     // A cube has 8 unique vertices and 12 triangles (36 indices)
-    int vertex_count = 8 * 3; // 8 vertices, 3 components each (x, y, z)
-    int index_count = 36;     // 12 triangles * 3 indices
+    const int vertex_count = 8; // 8 vertices, 3 components each (x, y, z)
+    const int index_count = 36; // 12 triangles * 3 indices
+    const int vertex_array_length = vertex_count * 3;
 
     // Create a new Mesh
-    Mesh *cube = mesh_new(vertex_count, index_count);
+    Mesh *cube = mesh_new();
     if (!cube)
         return NULL;
 
@@ -135,6 +139,13 @@ Mesh *mesh_prim_cube(float size)
     };
 
     // Copy vertex data
+    cube->vertices = sfa_new(vertex_array_length);
+    if (!cube->vertices)
+    {
+        mesh_free(cube);
+        return NULL;
+    }
+
     memcpy(cube->vertices->data, vertices, sizeof(vertices));
 
     // Define the 36 indices for 12 triangles (two per face)
@@ -166,7 +177,14 @@ Mesh *mesh_prim_cube(float size)
     };
 
     // Copy index data
-    memcpy(cube->indices->data, indices, sizeof(indices));
+    cube->vertex_indices = su32a_new(index_count);
+    if (!cube->vertex_indices)
+    {
+        mesh_free(cube);
+        return NULL;
+    }
+
+    memcpy(cube->vertex_indices->data, indices, sizeof(indices));
 
     return cube;
 }
@@ -176,13 +194,20 @@ Mesh *mesh_prim_tetrahedron(float size)
     // Number of vertices and indices for a tetrahedron
     const int num_vertices = 4;
     const int num_indices = 12; // 4 faces * 3 indices per face
+    const int vertex_array_length = num_vertices * 3;
 
     // Allocate a new Mesh with space for vertices and indices
-    Mesh *mesh = mesh_new(num_vertices * 3, num_indices);
-
+    Mesh *mesh = mesh_new();
     if (!mesh)
     {
         // Handle allocation failure
+        return NULL;
+    }
+
+    mesh->vertices = sfa_new(vertex_array_length);
+    if (!mesh->vertices)
+    {
+        mesh_free(mesh);
         return NULL;
     }
 
@@ -216,25 +241,32 @@ Mesh *mesh_prim_tetrahedron(float size)
     // Define indices for the four triangular faces
     // Each face is defined by three vertex indices
 
+    mesh->vertex_indices = su32a_new(num_indices);
+    if (!mesh->vertex_indices)
+    {
+        mesh_free(mesh);
+        return NULL;
+    }
+
     // Face 0: Vertex 0, Vertex 1, Vertex 2
-    mesh->indices->data[0] = 0;
-    mesh->indices->data[1] = 1;
-    mesh->indices->data[2] = 2;
+    mesh->vertex_indices->data[0] = 0;
+    mesh->vertex_indices->data[1] = 1;
+    mesh->vertex_indices->data[2] = 2;
 
     // Face 1: Vertex 0, Vertex 2, Vertex 3
-    mesh->indices->data[3] = 0;
-    mesh->indices->data[4] = 2;
-    mesh->indices->data[5] = 3;
+    mesh->vertex_indices->data[3] = 0;
+    mesh->vertex_indices->data[4] = 2;
+    mesh->vertex_indices->data[5] = 3;
 
     // Face 2: Vertex 0, Vertex 3, Vertex 1
-    mesh->indices->data[6] = 0;
-    mesh->indices->data[7] = 3;
-    mesh->indices->data[8] = 1;
+    mesh->vertex_indices->data[6] = 0;
+    mesh->vertex_indices->data[7] = 3;
+    mesh->vertex_indices->data[8] = 1;
 
     // Face 3: Vertex 1, Vertex 3, Vertex 2
-    mesh->indices->data[9] = 1;
-    mesh->indices->data[10] = 3;
-    mesh->indices->data[11] = 2;
+    mesh->vertex_indices->data[9] = 1;
+    mesh->vertex_indices->data[10] = 3;
+    mesh->vertex_indices->data[11] = 2;
 
     return mesh;
 }
@@ -245,9 +277,10 @@ Mesh *mesh_prim_rectangle(float width, float height)
     // Number of vertices and indices for a rectangle
     const int num_vertices = 4;
     const int num_indices = 6; // 2 triangles * 3 indices each
+    const int vertex_array_length = num_vertices * 3;
 
     // Allocate a new Mesh with space for vertices and indices
-    Mesh *mesh = mesh_new(num_vertices * 3, num_indices);
+    Mesh *mesh = mesh_new();
     if (!mesh)
     {
         // Handle allocation failure
@@ -270,6 +303,12 @@ Mesh *mesh_prim_rectangle(float width, float height)
         -half_width, half_height, 0.0f};
 
     // Copy vertex data into the mesh
+    mesh->vertices = sfa_new(vertex_array_length);
+    if (!mesh->vertices)
+    {
+        mesh_free(mesh);
+        return NULL;
+    }
     memcpy(mesh->vertices->data, vertices, sizeof(vertices));
 
     // Define the 6 indices for the two triangles
@@ -280,7 +319,13 @@ Mesh *mesh_prim_rectangle(float width, float height)
         2, 3, 0};
 
     // Copy index data into the mesh
-    memcpy(mesh->indices->data, indices, sizeof(indices));
+    mesh->vertex_indices = su32a_new(num_indices);
+    if (!mesh->vertex_indices)
+    {
+        mesh_free(mesh);
+        return NULL;
+    }
+    memcpy(mesh->vertex_indices->data, indices, sizeof(indices));
 
     return mesh;
 }
@@ -401,16 +446,95 @@ Mesh *mesh_copy(const Mesh *mesh)
     }
 
     // Create a new mesh with the same number of vertices and indices
-    Mesh *copy = mesh_new(mesh->vertices->length, mesh->indices->length);
+    Mesh *copy = mesh_new();
     if (!copy)
     {
         return NULL; // Handle allocation failure
     }
 
-    // Copy vertex and index data
-    memcpy(copy->vertices->data, mesh->vertices->data, mesh->vertices->length * sizeof(float));
-    memcpy(copy->indices->data, mesh->indices->data, mesh->indices->length * sizeof(int));
-    memcpy(copy->colors->data, mesh->colors->data, mesh->colors->length * sizeof(uint32_t));
+    // Copy vertices
+    if (mesh->vertices)
+    {
+        copy->vertices = sfa_new(mesh->vertices->length);
+        if (!copy->vertices)
+        {
+            mesh_free(copy);
+            return NULL; // Handle allocation failure
+        }
+        memcpy(copy->vertices->data, mesh->vertices->data, sizeof(float) * mesh->vertices->length);
+    }
+
+    // Copy normals
+    if (mesh->normals)
+    {
+        copy->normals = sfa_new(mesh->normals->length);
+        if (!copy->normals)
+        {
+            mesh_free(copy);
+            return NULL; // Handle allocation failure
+        }
+        memcpy(copy->normals->data, mesh->normals->data, sizeof(float) * mesh->normals->length);
+    }
+
+    // Copy texture coordinates
+    if (mesh->texcoords)
+    {
+        copy->texcoords = sfa_new(mesh->texcoords->length);
+        if (!copy->texcoords)
+        {
+            mesh_free(copy);
+            return NULL; // Handle allocation failure
+        }
+        memcpy(copy->texcoords->data, mesh->texcoords->data, sizeof(float) * mesh->texcoords->length);
+    }
+
+    // Copy vertex indices
+    if (mesh->vertex_indices)
+    {
+        copy->vertex_indices = su32a_new(mesh->vertex_indices->length);
+        if (!copy->vertex_indices)
+        {
+            mesh_free(copy);
+            return NULL; // Handle allocation failure
+        }
+        memcpy(copy->vertex_indices->data, mesh->vertex_indices->data, sizeof(uint32_t) * mesh->vertex_indices->length);
+    }
+
+    // Copy normal indices
+    if (mesh->normal_indices)
+    {
+        copy->normal_indices = su32a_new(mesh->normal_indices->length);
+        if (!copy->normal_indices)
+        {
+            mesh_free(copy);
+            return NULL; // Handle allocation failure
+        }
+        memcpy(copy->normal_indices->data, mesh->normal_indices->data, sizeof(uint32_t) * mesh->normal_indices->length);
+    }
+
+    // Copy texture coordinate indices
+    if (mesh->texcoord_indices)
+    {
+        copy->texcoord_indices = su32a_new(mesh->texcoord_indices->length);
+        if (!copy->texcoord_indices)
+        {
+            mesh_free(copy);
+            return NULL; // Handle allocation failure
+        }
+        memcpy(copy->texcoord_indices->data, mesh->texcoord_indices->data, sizeof(uint32_t) * mesh->texcoord_indices->length);
+    }
+
+    // Copy colors
+    if (mesh->colors)
+    {
+        copy->colors = su32a_new(mesh->colors->length);
+        if (!copy->colors)
+        {
+            mesh_free(copy);
+            return NULL; // Handle allocation failure
+        }
+        memcpy(copy->colors->data, mesh->colors->data, sizeof(uint32_t) * mesh->colors->length);
+    }
 
     return copy;
 }

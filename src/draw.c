@@ -56,7 +56,7 @@ void draw_mesh(
     // {
     //     colors = lighting_get_face_colors(
     //         model_transformed_vertices,
-    //         assets->gba_mesh->indices,
+    //         assets->gba_mesh->vertex_indices,
     //         assets->gba_mesh->colors,
     //         lights, num_lights);
     // }
@@ -82,12 +82,12 @@ void draw_mesh(
     map_to_screen_keep_z(transformed_vertices, screen_coords, pb->width, pb->height);
 
     // Render lines
-    // draw_tris_lines_with_depth(pb, screen_coords, assets->gba_mesh->indices, COLOR_WHITE);
+    // draw_tris_lines_with_depth(pb, screen_coords, assets->gba_mesh->vertex_indices, COLOR_WHITE);
     // draw_tris_with_colors_and_face_numbers(
     //     pb, assets->charmap_white,
-    //     screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors, 1.0, COLOR_BLACK);
-    // draw_tris_with_colors(pb, screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors);
-    // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->indices, assets->gba_mesh->colors);
+    //     screen_coords, assets->gba_mesh->vertex_indices, assets->gba_mesh->colors, 1.0, COLOR_BLACK);
+    // draw_tris_with_colors(pb, screen_coords, assets->gba_mesh->vertex_indices, assets->gba_mesh->colors);
+    // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->vertex_indices, assets->gba_mesh->colors);
     // use the colors calculated from the lighting
     // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, indices, colors);
     draw_tris_with_colors_and_depth_with_face_buffer(pb, z_buffer, face_buffer, screen_coords, indices, colors);
@@ -388,63 +388,51 @@ void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
     float scalef = 20.0;
     // float time = SDL_GetTicks() / 1000.0f;
     // float angle = time * 0.5f;
-    float angle = 0.0f;
+    // float angle = 0.0f;
 
-    // draw_gba_mesh(pb, z_buffer, state, assets,
-    //               vec3_create(0.0f, 0.0f, 0.0f),      // position
-    //               vec3_create(0.0f, angle, 0.0f),     // rotation
-    //               vec3_create(scalef, scalef, scalef) // scale
-    // );
-
-    // draw a 4x4 grid of gba meshes, centered at the origin though
-    // int grid_size = 12;
-    // float grid_spacing = 100.0f;
-    // float half_grid = (grid_size - 1) * grid_spacing * 0.5f;
-    // for (int y = 0; y < grid_size; y++)
-    // {
-    //     for (int x = 0; x < grid_size; x++)
-    //     {
-    //         float x_pos = x * grid_spacing - half_grid;
-    //         float y_pos = y * grid_spacing - half_grid;
-    //         draw_gba_mesh(pb, z_buffer, state, assets, lights, num_lights,
-    //                       vec3_create(x_pos, 0.0f, y_pos),    // position
-    //                       vec3_create(0.0f, angle, 0.0f),     // rotation
-    //                       vec3_create(scalef, scalef, scalef) // scale
-    //         );
-    //     }
-    // }
+    Mesh *mesh = assets->gba_mesh;
+    float x_pos = 0.0;
+    float y_pos = 0.0;
+    float z_pos = 0.0;
+    draw_mesh(pb, z_buffer, face_buffer, state, assets,
+              mesh->vertices, mesh->vertex_indices, mesh->colors,
+              lights, num_lights,
+              vec3_create(x_pos, y_pos, z_pos),   // position
+              vec3_create(0.0f, 0.0f, 0.0f),      // rotation
+              vec3_create(scalef, scalef, scalef) // scale
+    );
 
     // draw a nxnxn cube grid of gba meshes, centered at the origin
-    Mesh *mesh = assets->jet_plane_mesh;
-    int grid_size = 1;
-    float grid_spacing = 100.0f;
-    float half_grid = (grid_size - 1) * grid_spacing * 0.5f;
-    for (int z = 0; z < grid_size; z++)
-    {
-        for (int y = 0; y < grid_size; y++)
-        {
-            for (int x = 0; x < grid_size; x++)
-            {
-                float x_pos = x * grid_spacing - half_grid;
-                float y_pos = y * grid_spacing - half_grid;
-                float z_pos = z * grid_spacing - half_grid;
-                draw_mesh(pb, z_buffer, face_buffer, state, assets,
-                          mesh->vertices, mesh->indices, mesh->colors,
-                          lights, num_lights,
-                          vec3_create(x_pos, y_pos, z_pos),   // position
-                          vec3_create(0.0f, angle, 0.0f),     // rotation
-                          vec3_create(scalef, scalef, scalef) // scale
-                );
-            }
-        }
-    }
+    // Mesh *mesh = assets->gba_mesh;
+    // int grid_size = 1;
+    // float grid_spacing = 100.0f;
+    // float half_grid = (grid_size - 1) * grid_spacing * 0.5f;
+    // for (int z = 0; z < grid_size; z++)
+    // {
+    //     for (int y = 0; y < grid_size; y++)
+    //     {
+    //         for (int x = 0; x < grid_size; x++)
+    //         {
+    //             float x_pos = x * grid_spacing - half_grid;
+    //             float y_pos = y * grid_spacing - half_grid;
+    //             float z_pos = z * grid_spacing - half_grid;
+    //             draw_mesh(pb, z_buffer, face_buffer, state, assets,
+    //                       mesh->vertices, mesh->vertex_indices, mesh->colors,
+    //                       lights, num_lights,
+    //                       vec3_create(x_pos, y_pos, z_pos),   // position
+    //                       vec3_create(0.0f, angle, 0.0f),     // rotation
+    //                       vec3_create(scalef, scalef, scalef) // scale
+    //             );
+    //         }
+    //     }
+    // }
 
     // draw a tiny gba at each light
     // float light_gba_scale = 3.0f;
     // for (int i = 0; i < num_lights; i++)
     // {
     //     draw_mesh(pb, z_buffer, face_buffer, state, assets,
-    //               assets->gba_mesh->vertices, assets->gba_mesh->indices, assets->gba_mesh->colors,
+    //               assets->gba_mesh->vertices, assets->gba_mesh->vertex_indices, assets->gba_mesh->colors,
     //               lights, num_lights,
     //               lights[i].pos,                                                 // position
     //               vec3_create(0.0f, 0.0f, 0.0f),                                 // rotation
@@ -455,49 +443,49 @@ void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
     // free lights
     free(lights);
 
-    //     // debug the z buffer
-    // {
-    //     // get min and max z
-    //     float min_z = FLT_MAX;
-    //     float max_z = -FLT_MAX;
-    //     for (int i = 0; i < z_buffer->width * z_buffer->height; i++)
-    //     {
-    //         float z = z_buffer->data[i];
-    //         if (z < min_z)
-    //         {
-    //             min_z = z;
-    //         }
-    //         if (z > max_z)
-    //         {
-    //             max_z = z;
-    //         }
-    //     }
+    // debug the z buffer
+    {
+        // get min and max z
+        float min_z = FLT_MAX;
+        float max_z = -FLT_MAX;
+        for (int i = 0; i < z_buffer->width * z_buffer->height; i++)
+        {
+            float z = z_buffer->data[i];
+            if (z < min_z)
+            {
+                min_z = z;
+            }
+            if (z > max_z)
+            {
+                max_z = z;
+            }
+        }
 
-    //     float mapscale = 4.0f;
-    //     for (int y = 0; y < z_buffer->height; y += (int)mapscale)
-    //     {
-    //         for (int x = 0; x < z_buffer->width; x += (int)mapscale)
-    //         {
-    //             float z = f_texture_get(z_buffer, x, y);
-    //             // z = map_range(z, min_z, max_z, 0.0f, 1.0f);
-    //             // z = 1.0f - z;
-    //             // high pow
-    //             // z = pow(z, 1000.0f);
-    //             z /= 500.0f;
-    //             uint8_t z8 = (uint8_t)(z * 255.0f);
-    //             uint32_t color = color_from_rgb(z8, z8, z8);
-    //             set_pixel(pb, x / mapscale, y / mapscale, color);
+        float mapscale = 4.0f;
+        for (int y = 0; y < z_buffer->height; y += (int)mapscale)
+        {
+            for (int x = 0; x < z_buffer->width; x += (int)mapscale)
+            {
+                float z = f_texture_get(z_buffer, x, y);
+                // z = map_range(z, min_z, max_z, 0.0f, 1.0f);
+                // z = 1.0f - z;
+                // high pow
+                // z = pow(z, 1000.0f);
+                z /= 500.0f;
+                uint8_t z8 = (uint8_t)(z * 255.0f);
+                uint32_t color = color_from_rgb(z8, z8, z8);
+                pixel_buffer_set(pb, x / mapscale, y / mapscale, color);
 
-    //             // if (z < 500.0f)
-    //             // {
-    //             //     // write out in text the z value on screen
-    //             //     char z_str[10];
-    //             //     sprintf(z_str, "%.1f", z);
-    //             //     blit_string(pb, assets->charmap_white, z_str, x, y, 1, COLOR_WHITE);
-    //             // }
-    //         }
-    //     }
-    // }
+                // if (z < 500.0f)
+                // {
+                //     // write out in text the z value on screen
+                //     char z_str[10];
+                //     sprintf(z_str, "%.1f", z);
+                //     blit_string(pb, assets->charmap_white, z_str, x, y, 1, COLOR_WHITE);
+                // }
+            }
+        }
+    }
 
     // debug the face buffer
     {
@@ -528,17 +516,6 @@ void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
                 pixel_buffer_set(pb, x / mapscale, y / mapscale, color);
             }
         }
-
-        // just print the face buffer to terminal
-        // for (int y = 0; y < face_buffer->height; y++)
-        // {
-        //     for (int x = 0; x < face_buffer->width; x++)
-        //     {
-        //         uint32_t face = get_pixel(face_buffer, x, y);
-        //         printf("%d ", face);
-        //     }
-        //     printf("\n");
-        // }
     }
 
     {

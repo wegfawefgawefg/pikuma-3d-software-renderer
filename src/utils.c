@@ -134,7 +134,7 @@ char *trim_whitespace(char *str)
     while (isspace((unsigned char)*str))
         str++;
 
-    if (*str == 0) // All spaces
+    if (*str == 0) // All spaces?
         return str;
 
     // Trim trailing space
@@ -143,7 +143,7 @@ char *trim_whitespace(char *str)
         end--;
 
     // Write new null terminator
-    *(end + 1) = '\0';
+    *(end + 1) = 0;
 
     return str;
 }
