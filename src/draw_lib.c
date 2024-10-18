@@ -328,6 +328,121 @@ void draw_triangle_scanline_constant_z_with_face_buffer(
         }
     }
 }
+// Function to draw a triangle with scanline rasterization and texture sampling
+void draw_triangle_scanline_with_texture(
+    PixelBuffer *pb,
+    PixelBuffer *texture,
+    FTexture *z_buffer,
+    Triangle t,
+    Triangle t_uv,
+    float z,
+    PixelBuffer *face_buffer,
+    uint32_t face)
+{
+    // Extract vertex positions
+    Vec2 v0 = t.p1;
+    Vec2 v1 = t.p2;
+    Vec2 v2 = t.p3;
+
+    // Extract UV coordinates corresponding to each vertex
+    Vec2 uv0 = t_uv.p1;
+    Vec2 uv1 = t_uv.p2;
+    Vec2 uv2 = t_uv.p3;
+
+    // Sort vertices by Y-coordinate ascending
+    sort_vertices_by_y(&v0, &v1, &v2);
+    sort_vertices_by_y(&uv0, &uv1, &uv2); // Ensure UVs are sorted in the same order
+
+    // Calculate the total height of the triangle
+    float total_height = v2.y - v0.y;
+    if (total_height == 0.0f)
+        return; // Degenerate triangle
+
+    // Rasterize the triangle using scanline approach
+    for (int y = (int)ceilf(v0.y); y <= (int)floorf(v2.y); y++)
+    {
+        bool second_half = y > v1.y || v1.y == v0.y;
+        float segment_height = second_half ? (v2.y - v1.y) : (v1.y - v0.y);
+        if (segment_height == 0.0f)
+            continue; // Avoid division by zero
+
+        float alpha = (float)(y - v0.y) / total_height;
+        float beta = second_half ? (float)(y - v1.y) / (v2.y - v1.y) : (float)(y - v0.y) / (v1.y - v0.y);
+
+        // Compute intersection points on the left and right edges
+        Vec2 A = {v0.x + (v2.x - v0.x) * alpha, (float)y};
+        Vec2 B = second_half ? (Vec2){v1.x + (v2.x - v1.x) * beta, (float)y} : (Vec2){v0.x + (v1.x - v0.x) * beta, (float)y};
+
+        // Compute corresponding UV coordinates at A and B
+        Vec2 A_uv = {uv0.x + (uv2.x - uv0.x) * alpha, uv0.y + (uv2.y - uv0.y) * alpha};
+        Vec2 B_uv = second_half ? (Vec2){uv1.x + (uv2.x - uv1.x) * beta, uv1.y + (uv2.y - uv1.y) * beta} : (Vec2){uv0.x + (uv1.x - uv0.x) * beta, uv0.y + (uv1.y - uv0.y) * beta};
+
+        // Ensure A.x <= B.x for proper scanline processing
+        if (A.x > B.x)
+        {
+            Vec2 temp = A;
+            A = B;
+            B = temp;
+
+            Vec2 temp_uv = A_uv;
+            A_uv = B_uv;
+            B_uv = temp_uv;
+        }
+
+        // Clip X coordinates to screen bounds
+        int x_start = (int)ceilf(fmaxf(A.x, 0.0f));
+        int x_end = (int)floorf(fminf(B.x, (float)(pb->width - 1)));
+
+        if (y < 0 || y >= pb->height)
+            continue; // Skip scanlines outside the screen
+
+        // Calculate the horizontal distance between A and B
+        float scanline_length = B.x - A.x;
+        if (scanline_length == 0.0f)
+            continue; // Avoid division by zero
+
+        // Calculate the step increments for U and V per pixel
+        float u_step = (B_uv.x - A_uv.x) / scanline_length;
+        float v_step = (B_uv.y - A_uv.y) / scanline_length;
+
+        // Starting UV coordinates for the scanline
+        float u = A_uv.x + (x_start - A.x) * u_step;
+        float v = A_uv.y + (x_start - A.x) * v_step;
+
+        for (int x = x_start; x <= x_end; x++)
+        {
+            // Clamp UV coordinates to [0, 1] to avoid sampling outside the texture
+            float clamped_u = fminf(fmaxf(u, 0.0f), 1.0f);
+            float clamped_v = fminf(fmaxf(v, 0.0f), 1.0f);
+
+            // Convert UV coordinates to texture space indices
+            int tex_x = (int)(clamped_u * (texture->width - 1));
+            int tex_y = (int)(clamped_v * (texture->height - 1));
+
+            // Sample the texture color at (tex_x, tex_y)
+            uint32_t sampled_color = pixel_buffer_get(texture, tex_x, tex_y);
+
+            // Z-buffer check and update
+            float z_buffer_value = f_texture_get(z_buffer, x, y);
+            if (z < z_buffer_value)
+            {
+                // Update the pixel color in the framebuffer
+                pixel_buffer_set(pb, x, y, sampled_color);
+
+                // Update the Z-buffer with the new Z value
+                f_texture_set(z_buffer, x, y, z);
+
+                // Optionally, set the face identifier in the face buffer
+                if (face_buffer != NULL)
+                    pixel_buffer_set(face_buffer, x, y, face);
+            }
+
+            // Increment UV coordinates for the next pixel
+            u += u_step;
+            v += v_step;
+        }
+    }
+}
 
 // //////////////////////// COMPOUND DRAWING FUNCTIONS ////////////////////////
 void draw_cursor(PixelBuffer *pb, int x, int y, int size, uint32_t color)
@@ -589,6 +704,72 @@ void draw_tris_with_colors_and_depth_with_face_buffer(
         // draw the triangle
         uint32_t face = i / 3;
         draw_triangle_scanline_constant_z_with_face_buffer(pb, z_buffer, t, color, z, face_buffer, face);
+    }
+}
+
+void draw_tris_textured(
+    PixelBuffer *pb,
+    PixelBuffer *texture,
+    FTexture *z_buffer,
+    PixelBuffer *face_buffer,
+    SFA *vertices,
+    SU32A *indices,
+    SFA *texcoords,
+    SU32A *texcoord_indices)
+{
+    for (int i = 0; i < indices->length; i += 3)
+    {
+        int idx1 = indices->data[i];
+        int idx2 = indices->data[i + 1];
+        int idx3 = indices->data[i + 2];
+
+        Vec2 p1 = {vertices->data[idx1 * 3], vertices->data[idx1 * 3 + 1]};
+        Vec2 p2 = {vertices->data[idx2 * 3], vertices->data[idx2 * 3 + 1]};
+        Vec2 p3 = {vertices->data[idx3 * 3], vertices->data[idx3 * 3 + 1]};
+
+        // skip if all the verts are off screen
+        if (p1.x < 0 && p2.x < 0 && p3.x < 0)
+        {
+            continue;
+        }
+        if (p1.x >= pb->width && p2.x >= pb->width && p3.x >= pb->width)
+        {
+            continue;
+        }
+        if (p1.y < 0 && p2.y < 0 && p3.y < 0)
+        {
+            continue;
+        }
+        if (p1.y >= pb->height && p2.y >= pb->height && p3.y >= pb->height)
+        {
+            continue;
+        }
+
+        // skip if they are too close to the camera
+        const float near = 40.0f;
+        if (vertices->data[idx1 * 3 + 2] < near && vertices->data[idx2 * 3 + 2] < near && vertices->data[idx3 * 3 + 2] < near)
+        {
+            continue;
+        }
+
+        Triangle t = {p1, p2, p3};
+
+        // get the uv coordinates for the 3 vertices
+        int uv_idx1 = texcoord_indices->data[i];
+        int uv_idx2 = texcoord_indices->data[i + 1];
+        int uv_idx3 = texcoord_indices->data[i + 2];
+
+        Vec2 uv1 = {texcoords->data[uv_idx1 * 2], texcoords->data[uv_idx1 * 2 + 1]};
+        Vec2 uv2 = {texcoords->data[uv_idx2 * 2], texcoords->data[uv_idx2 * 2 + 1]};
+        Vec2 uv3 = {texcoords->data[uv_idx3 * 2], texcoords->data[uv_idx3 * 2 + 1]};
+
+        Triangle t_uv = {uv1, uv2, uv3};
+
+        // average the z values of the 3 vertices
+        float z = (vertices->data[idx1 * 3 + 2] + vertices->data[idx2 * 3 + 2] + vertices->data[idx3 * 3 + 2]) / 3.0f;
+        // draw the triangle
+        uint32_t face = i / 3;
+        draw_triangle_scanline_with_texture(pb, texture, z_buffer, t, t_uv, z, face_buffer, face);
     }
 }
 

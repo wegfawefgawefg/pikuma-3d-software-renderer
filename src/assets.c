@@ -1,5 +1,10 @@
 #include "assets.h"
 
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <SDL2/SDL_image.h>
 
 #include "utils.h"
@@ -92,87 +97,106 @@ LoadResult load_mesh(Mesh **mesh, const char *path)
     return (LoadResult){true, NULL};
 }
 
-Assets *load_assets(SDL_Renderer *renderer)
+// Helper function to append formatted error messages to a buffer
+static void append_error(char *buffer, size_t size, size_t *offset, const char *format, ...)
 {
-    Assets *assets = (Assets *)malloc(sizeof(Assets));
+    if (*offset >= size - 1)
+        return; // Buffer is full
+
+    va_list args;
+    va_start(args, format);
+    int written = vsnprintf(buffer + *offset, size - *offset, format, args);
+    va_end(args);
+
+    if (written > 0)
+    {
+        if ((size_t)written < size - *offset)
+            *offset += written;
+        else
+            *offset = size - 1; // Prevent overflow
+    }
+}
+
+#define LOAD_ASSET(load_func, asset_ptr, ...)                                       \
+    do                                                                              \
+    {                                                                               \
+        LoadResult res = load_func(asset_ptr, __VA_ARGS__);                         \
+        if (!res.success)                                                           \
+        {                                                                           \
+            append_error(error_buffer, sizeof(error_buffer), &error_offset,         \
+                         "Failed to load %s: %s\n", #asset_ptr, res.error_message); \
+            failed = true;                                                          \
+        }                                                                           \
+    } while (0)
+
+Assets *assets_load(SDL_Renderer *renderer)
+{
+    Assets *assets = (Assets *)calloc(1, sizeof(Assets));
     if (!assets)
     {
         fprintf(stderr, "Failed to allocate memory for assets\n");
         return NULL;
     }
 
-    LoadResult result;
-    const char *error_message = NULL;
+    // Buffer to accumulate error messages
+    char error_buffer[1024] = {0};
+    size_t error_offset = 0;
+    bool failed = false;
 
-#define LOAD_TEXTURE(resource, path)                          \
-    result = load_texture(&assets->resource, path, renderer); \
-    if (!result.success)                                      \
-    {                                                         \
-        error_message = result.error_message;                 \
-        goto cleanup;                                         \
+    // Load each asset using the helper macro
+    LOAD_ASSET(load_texture, &assets->gba_overlay, "./assets/textures/Clear-Purple-Shell-Game-Boy-Advance.png", renderer);
+    LOAD_ASSET(load_texture, &assets->gba_power_light, "./assets/textures/gbalight.png", renderer);
+    LOAD_ASSET(load_texture, &assets->pointer_sized_sdl_texture, "./assets/textures/pointer.png", renderer);
+
+    LOAD_ASSET(load_pixel_buffer, &assets->pointer_pixel_buffer, "./assets/textures/pointer.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->gba_texture, "./assets/textures/gba_smol_crunchy.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->manhat_texture, "./assets/textures/manhat.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->charmap_white, "./assets/charmap_white.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->triangle_up_texture, "./assets/textures/triangle_up_texture.png");
+
+    LOAD_ASSET(load_mesh, &assets->gba_mesh, "assets/models/gba.obj");
+    LOAD_ASSET(load_mesh, &assets->jet_plane_mesh, "assets/models/f22.obj");
+    LOAD_ASSET(load_mesh, &assets->cube_mesh, "assets/models/cube.obj");
+    LOAD_ASSET(load_mesh, &assets->quad_mesh, "assets/models/quad.obj");
+    LOAD_ASSET(load_mesh, &assets->triangle_mesh, "assets/models/triangle.obj");
+
+    // Check if any asset failed to load
+    if (failed)
+    {
+        fprintf(stderr, "%s", error_buffer);
+        assets_free(assets);
+        return NULL;
     }
 
-#define LOAD_PIXEL_BUFFER(resource, path)                \
-    result = load_pixel_buffer(&assets->resource, path); \
-    if (!result.success)                                 \
-    {                                                    \
-        error_message = result.error_message;            \
-        goto cleanup;                                    \
-    }
-
-#define LOAD_MESH(resource, path)                \
-    result = load_mesh(&assets->resource, path); \
-    if (!result.success)                         \
-    {                                            \
-        error_message = result.error_message;    \
-        goto cleanup;                            \
-    }
-
-    LOAD_TEXTURE(gba_overlay, "./assets/textures/Clear-Purple-Shell-Game-Boy-Advance.png")
-    LOAD_TEXTURE(gba_power_light, "./assets/textures/gbalight.png")
-    LOAD_TEXTURE(pointer_sized_sdl_texture, "./assets/textures/pointer.png")
-    LOAD_PIXEL_BUFFER(pointer_pixel_buffer, "./assets/textures/pointer.png")
-    LOAD_PIXEL_BUFFER(gba_texture, "./assets/textures/gba_smol_crunchy.png")
-    LOAD_MESH(gba_mesh, "assets/models/gba.obj")
-    LOAD_PIXEL_BUFFER(charmap_white, "./assets/charmap_white.png")
-    LOAD_MESH(jet_plane_mesh, "assets/models/f22.obj")
-    LOAD_MESH(cube_mesh, "assets/models/cube.obj")
-
+    // All assets loaded successfully
     return assets;
-
-cleanup:
-    fprintf(stderr, "Failed to load %s\n", error_message);
-    // Free all allocated resources
-    if (assets->gba_overlay)
-        sized_sdl_texture_free(assets->gba_overlay);
-    if (assets->gba_power_light)
-        sized_sdl_texture_free(assets->gba_power_light);
-    if (assets->pointer_sized_sdl_texture)
-        sized_sdl_texture_free(assets->pointer_sized_sdl_texture);
-    if (assets->pointer_pixel_buffer)
-        pixel_buffer_free(assets->pointer_pixel_buffer);
-    if (assets->gba_mesh)
-        mesh_free(assets->gba_mesh);
-    if (assets->gba_texture)
-        pixel_buffer_free(assets->gba_texture);
-    if (assets->charmap_white)
-        pixel_buffer_free(assets->charmap_white);
-    if (assets->jet_plane_mesh)
-        mesh_free(assets->jet_plane_mesh);
-    if (assets->cube_mesh)
-        mesh_free(assets->cube_mesh);
-    free(assets);
-    return NULL;
 }
 
-void destroy_assets(Assets *assets)
+#undef LOAD_ASSET
+
+void assets_free(Assets *assets)
 {
+    if (!assets)
+    {
+        return;
+    }
+
     sized_sdl_texture_free(assets->gba_overlay);
     sized_sdl_texture_free(assets->gba_power_light);
     sized_sdl_texture_free(assets->pointer_sized_sdl_texture);
+
+    pixel_buffer_free(assets->gba_texture);
+    pixel_buffer_free(assets->manhat_texture);
     pixel_buffer_free(assets->pointer_pixel_buffer);
     pixel_buffer_free(assets->charmap_white);
+    pixel_buffer_free(assets->triangle_up_texture);
+
     mesh_free(assets->gba_mesh);
+    mesh_free(assets->jet_plane_mesh);
+    mesh_free(assets->cube_mesh);
+    mesh_free(assets->quad_mesh);
+    mesh_free(assets->triangle_mesh);
+
     free(assets);
 }
 

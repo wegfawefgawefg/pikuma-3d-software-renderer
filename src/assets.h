@@ -27,15 +27,21 @@ typedef struct
     SizedSDLTexture *gba_overlay;
     SizedSDLTexture *gba_power_light;
     SizedSDLTexture *pointer_sized_sdl_texture;
-    Mesh *gba_mesh;
+
     PixelBuffer *gba_texture;
-    Mesh *jet_plane_mesh;
-    Mesh *cube_mesh;
+    PixelBuffer *manhat_texture;
     PixelBuffer *pointer_pixel_buffer;
     PixelBuffer *charmap_white;
+    PixelBuffer *triangle_up_texture;
+
+    Mesh *gba_mesh;
+    Mesh *jet_plane_mesh;
+    Mesh *cube_mesh;
+    Mesh *quad_mesh;
+    Mesh *triangle_mesh;
 } Assets;
 
-Assets *load_assets(SDL_Renderer *renderer);
-void destroy_assets(Assets *assets);
+Assets *assets_load(SDL_Renderer *renderer);
+void assets_free(Assets *assets);
 
 #endif // ASSETS_H

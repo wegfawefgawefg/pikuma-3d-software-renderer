@@ -90,7 +90,27 @@ void draw_mesh(
     // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->vertex_indices, assets->gba_mesh->colors);
     // use the colors calculated from the lighting
     // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, indices, colors);
-    draw_tris_with_colors_and_depth_with_face_buffer(pb, z_buffer, face_buffer, screen_coords, indices, colors);
+    // draw_tris_with_colors_and_depth_with_face_buffer(pb, z_buffer, face_buffer, screen_coords, indices, colors);
+
+    // void draw_tris_textured(
+    //     PixelBuffer *pb,
+    //     PixelBuffer *texture,
+    //     FTexture *z_buffer,
+    //     PixelBuffer *face_buffer,
+    //     SFA *vertices,
+    //     SU32A *indices,
+    //     SFA *texcoords,
+    //     SU32A *texcoords_indices)
+
+    draw_tris_textured(
+        pb,
+        assets->gba_texture,
+        z_buffer,
+        face_buffer,
+        screen_coords,
+        indices,
+        assets->gba_mesh->texcoords,
+        assets->gba_mesh->texcoord_indices);
 
     // Cleanup
     sfa_free(transformed_vertices);

@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     PixelBuffer *pixel_buffer = pixel_buffer_new(RENDER_WIDTH, RENDER_HEIGHT);
     FTexture *z_buffer = f_texture_new(RENDER_WIDTH, RENDER_HEIGHT);
 
-    Assets *assets = load_assets(renderer);
+    Assets *assets = assets_load(renderer);
     if (!assets)
     {
         printf("Failed to load assets\n");
