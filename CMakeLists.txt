@@ -18,6 +18,9 @@ endif()
 
 # Find SDL2 package
 find_package(SDL2 REQUIRED)
+if(NOT SDL2_FOUND)
+    message(FATAL_ERROR "SDL2 not found. Please install SDL2.")
+endif()
 include_directories(${SDL2_INCLUDE_DIRS})
 
 # Use pkg-config to find SDL2_ttf and SDL2_image
@@ -33,6 +36,41 @@ if(NOT SDL2_IMAGE_FOUND)
     message(FATAL_ERROR "SDL2_image not found. Please install SDL2_image.")
 endif()
 
+# -------------------------------------------------------------------
+# **Begin: Adding giflib (libgif) Integration Without pkg-config**
+
+# Find the path to gif_lib.h
+find_path(GIFLIB_INCLUDE_DIR
+    NAMES gif_lib.h
+    PATHS /usr/include /usr/local/include
+    PATH_SUFFIXES gif
+)
+
+# Find the gif library
+find_library(GIFLIB_LIBRARY
+    NAMES gif giflib
+    PATHS /usr/lib /usr/local/lib
+    PATH_SUFFIXES gif
+)
+
+# Check if both include directory and library are found
+if(NOT GIFLIB_INCLUDE_DIR)
+    message(FATAL_ERROR "gif_lib.h not found. Please install libgif-dev.")
+endif()
+
+if(NOT GIFLIB_LIBRARY)
+    message(FATAL_ERROR "libgif.so not found. Please install libgif-dev.")
+endif()
+
+# Optionally, you can set a version if needed
+# set(GIFLIB_VERSION "5.1.9") # Example version
+
+# Include giflib headers
+include_directories(${GIFLIB_INCLUDE_DIR})
+
+# -------------------------------------------------------------------
+# **End: Adding giflib (libgif) Integration Without pkg-config**
+
 # Add the src directory to the include path
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
@@ -43,10 +81,19 @@ file(GLOB SOURCES "src/*.c")
 add_executable(game ${SOURCES})
 
 # Link the libraries
-target_link_libraries(game ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
+target_link_libraries(game 
+    ${SDL2_LIBRARIES} 
+    ${SDL2_TTF_LIBRARIES} 
+    ${SDL2_IMAGE_LIBRARIES}
+    ${GIFLIB_LIBRARY}  # Link giflib library
+)
 
 # Add include directories
-target_include_directories(game PRIVATE ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS})
+target_include_directories(game PRIVATE 
+    ${SDL2_TTF_INCLUDE_DIRS} 
+    ${SDL2_IMAGE_INCLUDE_DIRS}
+    ${GIFLIB_INCLUDE_DIR}  # Include giflib directories
+)
 
 # Enable compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -70,6 +117,7 @@ if(MSVC)
     )
     target_link_options(game PRIVATE
         $<$<CONFIG:Release>:/LTCG>
+        $<$<CONFIG:Debug>:/DEBUG>         # Enable full debug info for Debug
         $<$<CONFIG:Dev>:/DEBUG>
     )
 else()

@@ -201,6 +201,25 @@ void sort_vertices_by_y(Vec2 *v0, Vec2 *v1, Vec2 *v2)
         swap_vec2(v1, v2);
 }
 
+void sort_verticies_by_y_and_swap_uv_indices(Vec2 *v0, Vec2 *v1, Vec2 *v2, Vec2 *uv0, Vec2 *uv1, Vec2 *uv2)
+{
+    if (v1->y < v0->y)
+    {
+        swap_vec2(v0, v1);
+        swap_vec2(uv0, uv1);
+    }
+    if (v2->y < v0->y)
+    {
+        swap_vec2(v0, v2);
+        swap_vec2(uv0, uv2);
+    }
+    if (v2->y < v1->y)
+    {
+        swap_vec2(v1, v2);
+        swap_vec2(uv1, uv2);
+    }
+}
+
 void draw_triangle_scanline_constant_z(PixelBuffer *pb, FTexture *z_buffer, Triangle t, uint32_t color, float z)
 {
     Vec2 v0 = t.p1;
@@ -328,6 +347,7 @@ void draw_triangle_scanline_constant_z_with_face_buffer(
         }
     }
 }
+
 // Function to draw a triangle with scanline rasterization and texture sampling
 void draw_triangle_scanline_with_texture(
     PixelBuffer *pb,
@@ -335,9 +355,7 @@ void draw_triangle_scanline_with_texture(
     FTexture *z_buffer,
     Triangle t,
     Triangle t_uv,
-    float z,
-    PixelBuffer *face_buffer,
-    uint32_t face)
+    float z)
 {
     // Extract vertex positions
     Vec2 v0 = t.p1;
@@ -350,8 +368,7 @@ void draw_triangle_scanline_with_texture(
     Vec2 uv2 = t_uv.p3;
 
     // Sort vertices by Y-coordinate ascending
-    sort_vertices_by_y(&v0, &v1, &v2);
-    sort_vertices_by_y(&uv0, &uv1, &uv2); // Ensure UVs are sorted in the same order
+    sort_verticies_by_y_and_swap_uv_indices(&v0, &v1, &v2, &uv0, &uv1, &uv2);
 
     // Calculate the total height of the triangle
     float total_height = v2.y - v0.y;
@@ -427,14 +444,14 @@ void draw_triangle_scanline_with_texture(
             if (z < z_buffer_value)
             {
                 // Update the pixel color in the framebuffer
-                pixel_buffer_set(pb, x, y, sampled_color);
+                pixel_buffer_set_alpha(pb, x, y, sampled_color);
 
                 // Update the Z-buffer with the new Z value
                 f_texture_set(z_buffer, x, y, z);
 
                 // Optionally, set the face identifier in the face buffer
-                if (face_buffer != NULL)
-                    pixel_buffer_set(face_buffer, x, y, face);
+                // if (face_buffer != NULL)
+                //     pixel_buffer_set(face_buffer, x, y, face);
             }
 
             // Increment UV coordinates for the next pixel
@@ -711,17 +728,26 @@ void draw_tris_textured(
     PixelBuffer *pb,
     PixelBuffer *texture,
     FTexture *z_buffer,
-    PixelBuffer *face_buffer,
-    SFA *vertices,
+    SFA *vertices, // x,y,w,x,y,w,x,y,w
     SU32A *indices,
     SFA *texcoords,
-    SU32A *texcoord_indices)
+    SU32A *texcoord_indices,
+    SFA *normals, // one per face: x,y,z...
+    Vec3 cam_dir)
 {
-    for (int i = 0; i < indices->length; i += 3)
+    int num_faces = indices->length / 3;
+    for (int face = 0; face < num_faces; face += 1)
     {
-        int idx1 = indices->data[i];
-        int idx2 = indices->data[i + 1];
-        int idx3 = indices->data[i + 2];
+        // Vec3 n1 = {normals->data[face], normals->data[face + 1], normals->data[face + 2]};
+        // // if facing away from camera skip
+        // if (vec3_dot(n1, cam_dir) > 0)
+        // {
+        //     continue;
+        // }
+
+        int idx1 = indices->data[face * 3];
+        int idx2 = indices->data[face * 3 + 1];
+        int idx3 = indices->data[face * 3 + 2];
 
         Vec2 p1 = {vertices->data[idx1 * 3], vertices->data[idx1 * 3 + 1]};
         Vec2 p2 = {vertices->data[idx2 * 3], vertices->data[idx2 * 3 + 1]};
@@ -755,9 +781,9 @@ void draw_tris_textured(
         Triangle t = {p1, p2, p3};
 
         // get the uv coordinates for the 3 vertices
-        int uv_idx1 = texcoord_indices->data[i];
-        int uv_idx2 = texcoord_indices->data[i + 1];
-        int uv_idx3 = texcoord_indices->data[i + 2];
+        int uv_idx1 = texcoord_indices->data[face * 3];
+        int uv_idx2 = texcoord_indices->data[face * 3 + 1];
+        int uv_idx3 = texcoord_indices->data[face * 3 + 2];
 
         Vec2 uv1 = {texcoords->data[uv_idx1 * 2], texcoords->data[uv_idx1 * 2 + 1]};
         Vec2 uv2 = {texcoords->data[uv_idx2 * 2], texcoords->data[uv_idx2 * 2 + 1]};
@@ -768,8 +794,7 @@ void draw_tris_textured(
         // average the z values of the 3 vertices
         float z = (vertices->data[idx1 * 3 + 2] + vertices->data[idx2 * 3 + 2] + vertices->data[idx3 * 3 + 2]) / 3.0f;
         // draw the triangle
-        uint32_t face = i / 3;
-        draw_triangle_scanline_with_texture(pb, texture, z_buffer, t, t_uv, z, face_buffer, face);
+        draw_triangle_scanline_with_texture(pb, texture, z_buffer, t, t_uv, z);
     }
 }
 

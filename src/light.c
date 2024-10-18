@@ -99,3 +99,36 @@ SU32A *lighting_get_face_colors(
 
     return out_colors;
 }
+
+void make_lights(void)
+{
+    // make an array of 8 lights with malloc
+    uint8_t num_lights = 4;
+    Light *lights = (Light *)malloc(num_lights * sizeof(Light));
+
+    // put a light at x 0, y 100, z 0
+    // lights[0] = light_new(vec3_create(0.0f, 100.0f, 0.0f), COLOR_GREEN, 20.0f);
+    // lights[1] = light_new(vec3_create(100.0f, 100.0f, 0.0f), COLOR_RED, 20.0f);
+
+    // make lights, and start them in random positions, spin them around the origin
+    for (int i = 0; i < num_lights; i++)
+    {
+        float time = SDL_GetTicks() / 1000.0f;
+        float radius = 300.0f;
+        float height_variance = 10.0f;
+        float angle = (float)i * (360.0f / (float)num_lights) + time * 30.0f;
+        float x = cosf(degrees_to_radians(angle)) * radius;
+        float y = sinf(degrees_to_radians(angle)) * height_variance;
+        float z = sinf(degrees_to_radians(angle)) * radius;
+
+        // Generate independent R, G, B using hash function with different seeds
+        float r = hash(i + 1); // Seed offset for variation
+        float g = hash(i + 2);
+        float b = hash(i + 3);
+
+        lights[i] = light_new(
+            vec3_create(x, y, z),
+            color_from_rgb(r * 255, g * 255, b * 255),
+            10000.0f);
+    }
+}

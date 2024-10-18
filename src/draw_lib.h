@@ -52,19 +52,18 @@ void draw_triangle_scanline_with_texture(
     FTexture *z_buffer,
     Triangle t,
     Triangle t_uv,
-    float z,
-    PixelBuffer *face_buffer,
-    uint32_t face);
+    float z);
 
 void draw_tris_textured(
     PixelBuffer *pb,
     PixelBuffer *texture,
     FTexture *z_buffer,
-    PixelBuffer *face_buffer,
-    SFA *vertices,
+    SFA *vertices, // x,y,w,x,y,w,x,y,w
     SU32A *indices,
     SFA *texcoords,
-    SU32A *texcoord_indices);
+    SU32A *texcoord_indices,
+    SFA *normals, // one per face: x,y,z...
+    Vec3 cam_dir);
 
 //////////////////////// ORTHOGRAPHIC PROJECTION ////////////////////////
 void draw_ortho_quad_lines(PixelBuffer *pb, Quad *quad, uint32_t color);

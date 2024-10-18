@@ -3,4 +3,5 @@
 
 void step(State *state)
 {
+    state->frame_count++;
 }

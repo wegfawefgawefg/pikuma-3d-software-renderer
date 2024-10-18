@@ -39,4 +39,7 @@ install_package libsdl2-image-dev
 install_package libsdl2-mixer-dev
 install_package libsdl2-net-dev
 
+# do libgif
+install_package libgif-dev
+
 echo "All required packages installed successfully!"

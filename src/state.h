@@ -4,10 +4,12 @@
 #include <stdbool.h>
 
 #include "primitives.h"
+#include "pixel_buffer.h"
 
 typedef struct
 {
     bool quit;
+    uint32_t frame_count;
 
     Vec3 camera_pos;
     Vec3 camera_target;

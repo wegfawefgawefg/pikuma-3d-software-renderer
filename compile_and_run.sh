@@ -8,8 +8,9 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-# Default build type
+# Default build type and Valgrind flag
 BUILD_TYPE="Release"
+USE_VALGRIND=false
 
 # Parse arguments
 for arg in "$@"
@@ -19,9 +20,15 @@ do
             BUILD_TYPE="Dev"
             shift
             ;;
+        --valgrind)
+            USE_VALGRIND=true
+            BUILD_TYPE="Debug"
+            shift
+            ;;
         --help|-h)
-            echo "Usage: $0 [--dev]"
-            echo "  --dev    Build with Dev configuration (optimized for development)"
+            echo "Usage: $0 [--dev] [--valgrind]"
+            echo "  --dev       Build with Dev configuration (optimized for development)"
+            echo "  --valgrind  Run the program with Valgrind after building"
             exit 0
             ;;
         *)
@@ -55,5 +62,10 @@ echo -e "${GREEN}Build successful.${NC}"
 cd ..
 
 # Run the executable
-echo "Running Software Renderer..."
-./build/game
+if [ "$USE_VALGRIND" = true ]; then
+    echo "Running Software Renderer with Valgrind..."
+    valgrind --leak-check=full --track-origins=yes ./build/game
+else
+    echo "Running Software Renderer..."
+    ./build/game
+fi

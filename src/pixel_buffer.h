@@ -38,8 +38,21 @@ void blit_string(PixelBuffer *target_pb, PixelBuffer *letters_pb, const char *st
 
 IVec2 calculate_new_top_left(PixelBuffer *src, float degrees, Vec2 center_of_rotation);
 void color_rotate(PixelBuffer *pb, float hue_shift);
-PixelBuffer *load_pixelbuffer_from_png(const char *filename);
+PixelBuffer *pixelbuffer_load_from_png(const char *filename);
 void draw_outline(PixelBuffer *pb, uint32_t color);
 IVec2 get_center_of_pixelbuffer(PixelBuffer *pb);
+
+// multiframe pixel buffer
+typedef struct
+{
+    int num_frames;
+    int current_frame;
+    PixelBuffer **frames;
+} MultiFramePixelBuffer;
+
+MultiFramePixelBuffer *mfpb_new(int num_frames, int width, int height);
+void mfpb_free(MultiFramePixelBuffer *mfpb);
+void mfpb_next_frame(MultiFramePixelBuffer *mfpb);
+MultiFramePixelBuffer *mfpb_load_from_gif(const char *filename);
 
 #endif // PIXEL_BUFFER_H

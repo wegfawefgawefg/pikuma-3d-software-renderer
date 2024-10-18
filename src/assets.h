@@ -39,6 +39,8 @@ typedef struct
     Mesh *cube_mesh;
     Mesh *quad_mesh;
     Mesh *triangle_mesh;
+
+    MultiFramePixelBuffer *earth_mfpb;
 } Assets;
 
 Assets *assets_load(SDL_Renderer *renderer);

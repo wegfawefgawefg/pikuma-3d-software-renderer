@@ -8,6 +8,7 @@
 #include <SDL2/SDL_image.h>
 
 #include "utils.h"
+#include "pixel_buffer.h"
 
 SizedSDLTexture *sized_sdl_texture_load(const char *filename, SDL_Renderer *renderer)
 {
@@ -66,7 +67,7 @@ LoadResult load_texture(SizedSDLTexture **texture, const char *path, SDL_Rendere
 
 LoadResult load_pixel_buffer(PixelBuffer **buffer, const char *path)
 {
-    *buffer = load_pixelbuffer_from_png(path);
+    *buffer = pixelbuffer_load_from_png(path);
     if (!*buffer)
     {
         return (LoadResult){false, path};
@@ -74,6 +75,19 @@ LoadResult load_pixel_buffer(PixelBuffer **buffer, const char *path)
 
     // print info on the pixel buffer, like Loaded PixelBuffer: path: path, width: %d, height: %d
     printf("\033[0;32mLoaded PixelBuffer: \033[0mpath: %s, width: %d, height: %d\n", path, (*buffer)->width, (*buffer)->height);
+    return (LoadResult){true, NULL};
+}
+
+LoadResult load_multi_frame_pixel_buffer(MultiFramePixelBuffer **mfpb, const char *path)
+{
+    *mfpb = mfpb_load_from_gif(path);
+    if (!*mfpb)
+    {
+        return (LoadResult){false, path};
+    }
+
+    // print info on the multi frame pixel buffer, like Loaded MultiFramePixelBuffer: path: path, num_frames: %d, width: %d, height: %d
+    printf("\033[0;32mLoaded MultiFramePixelBuffer: \033[0mpath: %s, num_frames: %d, width: %d, height: %d\n", path, (*mfpb)->num_frames, (*mfpb)->frames[0]->width, (*mfpb)->frames[0]->height);
     return (LoadResult){true, NULL};
 }
 
@@ -149,16 +163,18 @@ Assets *assets_load(SDL_Renderer *renderer)
     LOAD_ASSET(load_texture, &assets->pointer_sized_sdl_texture, "./assets/textures/pointer.png", renderer);
 
     LOAD_ASSET(load_pixel_buffer, &assets->pointer_pixel_buffer, "./assets/textures/pointer.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->gba_texture, "./assets/textures/gba_smol_crunchy.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->gba_texture, "./assets/textures/gba_smol_crunchy2large.png");
     LOAD_ASSET(load_pixel_buffer, &assets->manhat_texture, "./assets/textures/manhat.png");
     LOAD_ASSET(load_pixel_buffer, &assets->charmap_white, "./assets/charmap_white.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->triangle_up_texture, "./assets/textures/triangle_up_texture.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->triangle_up_texture, "./assets/textures/triangle.png");
 
-    LOAD_ASSET(load_mesh, &assets->gba_mesh, "assets/models/gba.obj");
+    LOAD_ASSET(load_mesh, &assets->gba_mesh, "assets/models/gba2.obj");
     LOAD_ASSET(load_mesh, &assets->jet_plane_mesh, "assets/models/f22.obj");
     LOAD_ASSET(load_mesh, &assets->cube_mesh, "assets/models/cube.obj");
     LOAD_ASSET(load_mesh, &assets->quad_mesh, "assets/models/quad.obj");
     LOAD_ASSET(load_mesh, &assets->triangle_mesh, "assets/models/triangle.obj");
+
+    LOAD_ASSET(load_multi_frame_pixel_buffer, &assets->earth_mfpb, "./assets/animated_textures/earth.gif");
 
     // Check if any asset failed to load
     if (failed)
@@ -196,6 +212,8 @@ void assets_free(Assets *assets)
     mesh_free(assets->cube_mesh);
     mesh_free(assets->quad_mesh);
     mesh_free(assets->triangle_mesh);
+
+    mfpb_free(assets->earth_mfpb);
 
     free(assets);
 }
@@ -370,6 +388,7 @@ Mesh *mesh_load_from_obj(const char *filename)
             // f v1//vn1 v2//vn2 v3//vn3
             // f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
             // We will only handle the last format
+            // that format is vertex/texcoord/normal indices
 
             int v0, v1, v2;
             int vt0, vt1, vt2;
@@ -455,7 +474,7 @@ Mesh *mesh_load_from_obj(const char *filename)
 
     fclose(file);
 
-    // Load colors from the .col file as per your original code
+    // Load colors from the .col file
     char col_filename[512];
     replace_extension_with_col(filename, col_filename, sizeof(col_filename));
 
