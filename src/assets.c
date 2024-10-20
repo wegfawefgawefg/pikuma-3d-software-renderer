@@ -158,18 +158,13 @@ Assets *assets_load(SDL_Renderer *renderer)
     bool failed = false;
 
     // Load each asset using the helper macro
-    LOAD_ASSET(load_texture, &assets->gba_overlay, "./assets/textures/Clear-Purple-Shell-Game-Boy-Advance.png", renderer);
-    LOAD_ASSET(load_texture, &assets->gba_power_light, "./assets/textures/gbalight.png", renderer);
-    LOAD_ASSET(load_texture, &assets->pointer_sized_sdl_texture, "./assets/textures/pointer.png", renderer);
-
     LOAD_ASSET(load_pixel_buffer, &assets->pointer_pixel_buffer, "./assets/textures/pointer.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->gba_texture, "./assets/textures/gba_smol_crunchy2large.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->gba_texture, "./assets/textures/gba.png");
     LOAD_ASSET(load_pixel_buffer, &assets->manhat_texture, "./assets/textures/manhat.png");
     LOAD_ASSET(load_pixel_buffer, &assets->charmap_white, "./assets/charmap_white.png");
     LOAD_ASSET(load_pixel_buffer, &assets->triangle_up_texture, "./assets/textures/triangle.png");
 
     LOAD_ASSET(load_mesh, &assets->gba_mesh, "assets/models/gba2.obj");
-    LOAD_ASSET(load_mesh, &assets->jet_plane_mesh, "assets/models/f22.obj");
     LOAD_ASSET(load_mesh, &assets->cube_mesh, "assets/models/cube.obj");
     LOAD_ASSET(load_mesh, &assets->quad_mesh, "assets/models/quad.obj");
     LOAD_ASSET(load_mesh, &assets->triangle_mesh, "assets/models/triangle.obj");
@@ -197,10 +192,6 @@ void assets_free(Assets *assets)
         return;
     }
 
-    sized_sdl_texture_free(assets->gba_overlay);
-    sized_sdl_texture_free(assets->gba_power_light);
-    sized_sdl_texture_free(assets->pointer_sized_sdl_texture);
-
     pixel_buffer_free(assets->gba_texture);
     pixel_buffer_free(assets->manhat_texture);
     pixel_buffer_free(assets->pointer_pixel_buffer);
@@ -208,7 +199,6 @@ void assets_free(Assets *assets)
     pixel_buffer_free(assets->triangle_up_texture);
 
     mesh_free(assets->gba_mesh);
-    mesh_free(assets->jet_plane_mesh);
     mesh_free(assets->cube_mesh);
     mesh_free(assets->quad_mesh);
     mesh_free(assets->triangle_mesh);
