@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
         printf("Failed to load assets\n");
         return 1;
     }
+    textures_print(assets->textures);
 
     // Main loop
     State *state = new_state();
