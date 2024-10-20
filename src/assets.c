@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <SDL2/SDL_image.h>
-
 #include "utils.h"
 #include "pixel_buffer.h"
 
@@ -143,7 +141,7 @@ static void append_error(char *buffer, size_t size, size_t *offset, const char *
         }                                                                           \
     } while (0)
 
-Assets *assets_load(SDL_Renderer *renderer)
+Assets *assets_load(void)
 {
     Assets *assets = (Assets *)calloc(1, sizeof(Assets));
     if (!assets)

@@ -38,7 +38,7 @@ typedef struct
     MultiFramePixelBuffer *earth_mfpb;
 } Assets;
 
-Assets *assets_load(SDL_Renderer *renderer);
+Assets *assets_load(void);
 void assets_free(Assets *assets);
 
 #endif // ASSETS_H

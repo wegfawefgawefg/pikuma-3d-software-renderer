@@ -4,7 +4,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_image.h>
+// #include <SDL2/SDL_image.h>
 
 #include "globals.h"
 #include "state.h"
@@ -36,8 +36,9 @@ void draw_fps(SDL_Renderer *renderer, TTF_Font *font, int fps)
 
 int main(int argc, char *argv[])
 {
+    // Initialize SDL
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
-    IMG_Init(IMG_INIT_PNG);
+    // IMG_Init(IMG_INIT_PNG);
     TTF_Init(); // Initialize SDL_ttf
     TTF_Font *font = TTF_OpenFont("./assets/fonts/DejaVuSans.ttf", 24);
     if (!font)
@@ -47,45 +48,49 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // get monitor dims
-    SDL_DisplayMode dm;
-    SDL_GetCurrentDisplayMode(0, &dm);
-    // set width and height to 80% of monitor dims
-    // WIDTH = dm.w * 0.8;
-    // HEIGHT = dm.h * 0.8;
+    // Create window
     WIDTH = WINDOW_WIDTH;
     HEIGHT = WINDOW_HEIGHT;
+    // Optional: set width and height to 80% of monitor dims
+    // SDL_DisplayMode dm;
+    // SDL_GetCurrentDisplayMode(0, &dm);
+    // WIDTH = dm.w * 0.8;
+    // HEIGHT = dm.h * 0.8;
     SDL_Window *window = SDL_CreateWindow(
         "Software Renderer",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         WIDTH, HEIGHT, 0);
 
-    // hide mouse
-    SDL_ShowCursor(SDL_DISABLE);
+    // Do Various SDL Window Options
+    SDL_ShowCursor(SDL_DISABLE);              // hide cursor
+    SDL_SetWindowBordered(window, SDL_FALSE); // hide window borrder
 
-    // Main loop
-    State *state = new_state();
+    // Setup buffers
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-    // Create render texture
-    SDL_Texture *renderTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
-                                                   SDL_TEXTUREACCESS_TARGET, RENDER_WIDTH, RENDER_HEIGHT);
+    //// The SDL render texturer is just for the last step during draw.
+    SDL_Texture *renderTexture = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+        RENDER_WIDTH, RENDER_HEIGHT);
+    //// All the real rendering is happening on the pixel buffer via cpu.
     PixelBuffer *pixel_buffer = pixel_buffer_new(RENDER_WIDTH, RENDER_HEIGHT);
     FTexture *z_buffer = f_texture_new(RENDER_WIDTH, RENDER_HEIGHT);
 
-    Assets *assets = assets_load(renderer);
+    // Load assets
+    Assets *assets = assets_load();
     if (!assets)
     {
         printf("Failed to load assets\n");
         return 1;
     }
 
+    // Main loop
+    State *state = new_state();
     int fps = 0;
     int frameCount = 0;
     Uint32 fpsLastTime = SDL_GetTicks();
     Uint32 frameStart;
     float frameTime;
-
     while (!state->quit)
     {
         frameStart = SDL_GetTicks();
@@ -111,56 +116,9 @@ int main(int argc, char *argv[])
         // copy pixel buffer to render texture
         copy_to_texture(pixel_buffer, renderTexture);
 
-        if (USE_GBA_BORDER)
-        {
-            // Draw the render texture to the window
-            SDL_Rect destRect = {GBA_WINDOW_START_X, GBA_WINDOW_START_Y, GBA_WINDOW_WIDTH, GBA_WINDOW_HEIGHT};
-            SDL_RenderCopy(renderer, renderTexture, NULL, &destRect);
-
-            // Draw the loaded image onto the window
-            SDL_Rect imageRect = {0, 0, WIDTH, HEIGHT};
-            SDL_RenderCopy(renderer, assets->gba_overlay->texture, NULL, &imageRect);
-        }
-        else
-        {
-            // Draw the render texture to the window
-            SDL_Rect destRect = {0, 0, WIDTH, HEIGHT};
-            SDL_RenderCopy(renderer, renderTexture, NULL, &destRect);
-        }
-
-        // draw a red rect at mouse pos on the window
-        // int x, y;
-        // SDL_GetMouseState(&x, &y);
-        // SDL_Rect rect = {x, y, 10, 10};
-        // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        // SDL_RenderFillRect(renderer, &rect);
-
-        // Draw the pointer image at the mouse
-        // SDL_Rect pointerRect = {x, y,
-        //                         assets->pointer_sized_sdl_texture->width * WINDOW_SCALE,
-        //                         assets->pointer_sized_sdl_texture->height * WINDOW_SCALE};
-        // SDL_RenderCopy(renderer, assets->pointer_sized_sdl_texture->texture, NULL, &pointerRect);
-
-        // Draw the gbalight image
-        if (USE_GBA_BORDER)
-        {
-
-            // vary its brightness based on sin of time
-            int light_brightness = 128 + 127 * sin(SDL_GetTicks() / 1000.0 * 5.0);
-            // minimum brightness of 100
-            light_brightness = light_brightness < 100 ? 100 : light_brightness;
-            SDL_SetTextureColorMod(
-                assets->gba_power_light->texture,
-                light_brightness, light_brightness, light_brightness);
-            SDL_Rect gbaLightRect = {
-                GBA_LIGHT_X, GBA_LIGHT_Y,
-                assets->gba_power_light->width * WINDOW_SCALE,
-                assets->gba_power_light->height * WINDOW_SCALE};
-            SDL_RenderCopy(
-                renderer,
-                assets->gba_power_light->texture,
-                NULL, &gbaLightRect);
-        }
+        // Draw the render texture to the window
+        SDL_Rect destRect = {0, 0, WIDTH, HEIGHT};
+        SDL_RenderCopy(renderer, renderTexture, NULL, &destRect);
 
         // FPS meter
         frameCount++;

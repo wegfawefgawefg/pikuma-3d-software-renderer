@@ -8,16 +8,8 @@ IVec2 get_mouse_pos(void)
     int window_x, window_y;
     SDL_GetMouseState(&window_x, &window_y);
     int x, y;
-    if (USE_GBA_BORDER)
-    {
-        x = (window_x - GBA_WINDOW_START_X) * RENDER_WIDTH / GBA_WINDOW_WIDTH;
-        y = (window_y - GBA_WINDOW_START_Y) * RENDER_HEIGHT / GBA_WINDOW_HEIGHT;
-    }
-    else
-    {
-        x = window_x * RENDER_WIDTH / WIDTH;
-        y = window_y * RENDER_HEIGHT / HEIGHT;
-    }
+    x = window_x * RENDER_WIDTH / WIDTH;
+    y = window_y * RENDER_HEIGHT / HEIGHT;
     return (IVec2){x, y};
 }
 
