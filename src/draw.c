@@ -84,17 +84,6 @@ void draw_mesh(
         = sfa_new(transformed_vertices->length / 4 * 3);
     map_to_screen_keep_z(transformed_vertices, screen_coords, pb->width, pb->height);
 
-    // Render lines
-    // draw_tris_lines_with_depth(pb, screen_coords, assets->gba_mesh->vertex_indices, COLOR_WHITE);
-    // draw_tris_with_colors_and_face_numbers(
-    //     pb, assets->charmap_white,
-    //     screen_coords, assets->gba_mesh->vertex_indices, assets->gba_mesh->colors, 1.0, COLOR_BLACK);
-    // draw_tris_with_colors(pb, screen_coords, assets->gba_mesh->vertex_indices, assets->gba_mesh->colors);
-    // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, assets->gba_mesh->vertex_indices, assets->gba_mesh->colors);
-    // use the colors calculated from the lighting
-    // draw_tris_with_colors_and_depth(pb, z_buffer, screen_coords, indices, colors);
-    // draw_tris_with_colors_and_depth_with_face_buffer(pb, z_buffer, face_buffer, screen_coords, indices, colors);
-
     // calculate cam dir
     Vec3 cam_dir = vec3_sub(state->camera_target, state->camera_pos);
     cam_dir = vec3_normalize(cam_dir);
@@ -109,6 +98,9 @@ void draw_mesh(
         texcoord_indices,
         normals,
         cam_dir);
+
+    // Render lines
+    draw_tris_lines_with_depth(pb, screen_coords, indices, 0xFFFFFF06);
 
     // Cleanup
     sfa_free(model_transformed_vertices);

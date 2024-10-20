@@ -400,9 +400,16 @@ void color_rotate(PixelBuffer *pb, float hue_shift)
 
 PixelBuffer *pixelbuffer_load_from_png(const char *filename)
 {
+    // append "./assets/textures/" to the front of the filename to get the path
+    char path[512];
+    snprintf(path, sizeof(path), "./assets/textures/%s", filename);
+
+    // print the path
+    printf("Loading image from path: %s\n", path);
+
     int width, height, channels;
     // Load the image using stb_image, expecting 4 channels (RGBA)
-    uint8_t *data = stbi_load(filename, &width, &height, &channels, 4);
+    uint8_t *data = stbi_load(path, &width, &height, &channels, 4);
     if (!data)
     {
         printf("Failed to load image: %s\n", stbi_failure_reason());
@@ -614,8 +621,11 @@ void mfpb_next_frame(MultiFramePixelBuffer *mfpb)
 
 MultiFramePixelBuffer *mfpb_load_from_gif(const char *filename)
 {
+    char path[512];
+    snprintf(path, sizeof(path), "./assets/animated_textures/%s", filename);
+
     int error = 0;
-    GifFileType *gif = DGifOpenFileName(filename, &error);
+    GifFileType *gif = DGifOpenFileName(path, &error);
     if (gif == NULL)
     {
         fprintf(stderr, "Failed to open GIF file %s: %s\n", filename, GifErrorString(error));

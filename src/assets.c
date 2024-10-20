@@ -10,7 +10,10 @@
 
 SizedSDLTexture *sized_sdl_texture_load(const char *filename, SDL_Renderer *renderer)
 {
-    SDL_Surface *surface = IMG_Load(filename);
+    char path[512];
+    snprintf(path, sizeof(path), "./assets/sdl_textures/%s", filename);
+
+    SDL_Surface *surface = IMG_Load(path);
     if (!surface)
     {
         printf("Failed to load image: %s\n", IMG_GetError());
@@ -58,7 +61,7 @@ LoadResult load_texture(SizedSDLTexture **texture, const char *path, SDL_Rendere
     }
 
     // print info on the texture, like Loaded Texture: path: path, width: %d, height: %d
-    printf("\033[0;32mLoaded Texture: \033[0mpath: %s, width: %d, height: %d\n", path, (*texture)->width, (*texture)->height);
+    printf("\033[0;32mLoaded Texture: \033[0mfile: %s, width: %d, height: %d\n", path, (*texture)->width, (*texture)->height);
 
     return (LoadResult){true, NULL};
 }
@@ -72,7 +75,7 @@ LoadResult load_pixel_buffer(PixelBuffer **buffer, const char *path)
     }
 
     // print info on the pixel buffer, like Loaded PixelBuffer: path: path, width: %d, height: %d
-    printf("\033[0;32mLoaded PixelBuffer: \033[0mpath: %s, width: %d, height: %d\n", path, (*buffer)->width, (*buffer)->height);
+    printf("\033[0;32mLoaded PixelBuffer: \033[0mfile: %s, width: %d, height: %d\n", path, (*buffer)->width, (*buffer)->height);
     return (LoadResult){true, NULL};
 }
 
@@ -85,7 +88,7 @@ LoadResult load_multi_frame_pixel_buffer(MultiFramePixelBuffer **mfpb, const cha
     }
 
     // print info on the multi frame pixel buffer, like Loaded MultiFramePixelBuffer: path: path, num_frames: %d, width: %d, height: %d
-    printf("\033[0;32mLoaded MultiFramePixelBuffer: \033[0mpath: %s, num_frames: %d, width: %d, height: %d\n", path, (*mfpb)->num_frames, (*mfpb)->frames[0]->width, (*mfpb)->frames[0]->height);
+    printf("\033[0;32mLoaded MultiFramePixelBuffer: \033[0mfile: %s, num_frames: %d, width: %d, height: %d\n", path, (*mfpb)->num_frames, (*mfpb)->frames[0]->width, (*mfpb)->frames[0]->height);
     return (LoadResult){true, NULL};
 }
 
@@ -98,7 +101,7 @@ LoadResult load_mesh(Mesh **mesh, const char *path)
     }
 
     // print info on the mesh, like Loaded Mesh: path: path, and the other lengths tabbed over on the next lines
-    printf("\033[0;32mLoaded Mesh: \033[0mpath: %s,\n", path);
+    printf("\033[0;32mLoaded Mesh: \033[0mfile: %s,\n", path);
     printf("\tVertices: %d\n", (*mesh)->vertices->length / 3);
     printf("\tNormals: %d\n", (*mesh)->normals->length / 3);
     printf("\tTexcoords: %d\n", (*mesh)->texcoords->length / 2);
@@ -156,18 +159,18 @@ Assets *assets_load(void)
     bool failed = false;
 
     // Load each asset using the helper macro
-    LOAD_ASSET(load_pixel_buffer, &assets->pointer_pixel_buffer, "./assets/textures/pointer.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->gba_texture, "./assets/textures/gba.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->manhat_texture, "./assets/textures/manhat.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->charmap_white, "./assets/charmap_white.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->triangle_up_texture, "./assets/textures/triangle.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->pointer_pixel_buffer, "pointer.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->gba_texture, "gba.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->manhat_texture, "manhat.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->charmap_white, "charmap_white.png");
+    LOAD_ASSET(load_pixel_buffer, &assets->triangle_up_texture, "triangle.png");
 
-    LOAD_ASSET(load_mesh, &assets->gba_mesh, "assets/models/gba2.obj");
-    LOAD_ASSET(load_mesh, &assets->cube_mesh, "assets/models/cube.obj");
-    LOAD_ASSET(load_mesh, &assets->quad_mesh, "assets/models/quad.obj");
-    LOAD_ASSET(load_mesh, &assets->triangle_mesh, "assets/models/triangle.obj");
+    LOAD_ASSET(load_mesh, &assets->gba_mesh, "gba.obj");
+    LOAD_ASSET(load_mesh, &assets->cube_mesh, "cube.obj");
+    LOAD_ASSET(load_mesh, &assets->quad_mesh, "quad.obj");
+    LOAD_ASSET(load_mesh, &assets->triangle_mesh, "triangle.obj");
 
-    LOAD_ASSET(load_multi_frame_pixel_buffer, &assets->earth_mfpb, "./assets/animated_textures/earth.gif");
+    LOAD_ASSET(load_multi_frame_pixel_buffer, &assets->earth_mfpb, "earth.gif");
 
     // Check if any asset failed to load
     if (failed)
@@ -244,7 +247,10 @@ void replace_extension_with_col(const char *filename, char *col_filename, size_t
 */
 Mesh *mesh_load_from_obj(const char *filename)
 {
-    FILE *file = fopen(filename, "r");
+    char path[512];
+    snprintf(path, sizeof(path), "./assets/models/%s", filename);
+
+    FILE *file = fopen(path, "r");
     if (!file)
     {
         fprintf(stderr, "Failed to open OBJ file: %s\n", filename);
@@ -466,7 +472,11 @@ Mesh *mesh_load_from_obj(const char *filename)
     char col_filename[512];
     replace_extension_with_col(filename, col_filename, sizeof(col_filename));
 
-    FILE *col_file = fopen(col_filename, "r");
+    // colorfile path
+    char col_path[512];
+    snprintf(col_path, sizeof(col_path), "./assets/models/%s", col_filename);
+
+    FILE *col_file = fopen(col_path, "r");
     if (!col_file)
     {
         fprintf(stderr, "Failed to open color file: %s\n", col_filename);

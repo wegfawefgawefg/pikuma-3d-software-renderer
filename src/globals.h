@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#define RENDER_SCALE 2.0
+#define RENDER_SCALE 3.0
 
 #define RENDER_WIDTH 240 * RENDER_SCALE
 #define RENDER_HEIGHT 160 * RENDER_SCALE

@@ -5,6 +5,8 @@
 
 #include <SDL2/SDL.h>
 
+#define M_PI 3.14159265358979323846
+
 #define SWAP(a, b)          \
     do                      \
     {                       \

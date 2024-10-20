@@ -18,7 +18,7 @@ void draw_line(PixelBuffer *pb, int x0, int y0, int x1, int y1, uint32_t color)
 
     while (1)
     {
-        pixel_buffer_set(pb, x0, y0, color);
+        pixel_buffer_set_alpha(pb, x0, y0, color);
 
         if (x0 == x1 && y0 == y1)
         {
