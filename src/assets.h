@@ -24,17 +24,20 @@ Mesh *mesh_load_from_obj(const char *filename);
 // defs for the assets, such as gba overlay, gba power light, pointer
 typedef struct
 {
+    // Meshes
+    Mesh *gba_mesh;
+    Mesh *cube_mesh;
+    Mesh *quad_mesh;
+    Mesh *triangle_mesh;
+
+    // Textures
     PixelBuffer *gba_texture;
     PixelBuffer *manhat_texture;
     PixelBuffer *pointer_pixel_buffer;
     PixelBuffer *charmap_white;
     PixelBuffer *triangle_up_texture;
 
-    Mesh *gba_mesh;
-    Mesh *cube_mesh;
-    Mesh *quad_mesh;
-    Mesh *triangle_mesh;
-
+    // Animated Textures
     MultiFramePixelBuffer *earth_mfpb;
 } Assets;
 
