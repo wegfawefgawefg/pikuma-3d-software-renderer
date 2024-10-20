@@ -1,9 +1,14 @@
+#define _DEFAULT_SOURCE // Ensure feature test macros are set
+
 #include "assets.h"
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>   // For directory traversal
+#include <sys/stat.h> // For file information
+#include <errno.h>    // For error handling
 
 #include "utils.h"
 #include "pixel_buffer.h"
@@ -144,6 +149,26 @@ static void append_error(char *buffer, size_t size, size_t *offset, const char *
         }                                                                           \
     } while (0)
 
+Assets *assets_new(void)
+{
+    Assets *assets = (Assets *)calloc(1, sizeof(Assets));
+    if (!assets)
+    {
+        fprintf(stderr, "Failed to allocate memory for assets\n");
+        return NULL;
+    }
+
+    // set all your pointers to null
+    assets->gba_mesh = NULL;
+    assets->cube_mesh = NULL;
+    assets->quad_mesh = NULL;
+    assets->triangle_mesh = NULL;
+    assets->textures = NULL;
+    assets->earth_mfpb = NULL;
+
+    return assets;
+}
+
 Assets *assets_load(void)
 {
     Assets *assets = (Assets *)calloc(1, sizeof(Assets));
@@ -157,13 +182,6 @@ Assets *assets_load(void)
     char error_buffer[1024] = {0};
     size_t error_offset = 0;
     bool failed = false;
-
-    // Load each asset using the helper macro
-    LOAD_ASSET(load_pixel_buffer, &assets->pointer_pixel_buffer, "pointer.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->gba_texture, "gba.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->manhat_texture, "manhat.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->charmap_white, "charmap_white.png");
-    LOAD_ASSET(load_pixel_buffer, &assets->triangle_up_texture, "triangle.png");
 
     LOAD_ASSET(load_mesh, &assets->gba_mesh, "gba.obj");
     LOAD_ASSET(load_mesh, &assets->cube_mesh, "cube.obj");
@@ -180,6 +198,16 @@ Assets *assets_load(void)
         return NULL;
     }
 
+    // Load all PNG textures from the specified directory
+    const char *texture_directory = "./assets/textures/";
+    Textures *textures = textures_new();
+    if (textures_load_from_directory(textures, texture_directory) != 0)
+    {
+        fprintf(stderr, "Failed to load textures from directory: %s\n", texture_directory);
+        // Depending on your application's requirements, you might choose to exit or continue
+    }
+    assets->textures = textures;
+
     // All assets loaded successfully
     return assets;
 }
@@ -193,18 +221,14 @@ void assets_free(Assets *assets)
         return;
     }
 
-    pixel_buffer_free(assets->gba_texture);
-    pixel_buffer_free(assets->manhat_texture);
-    pixel_buffer_free(assets->pointer_pixel_buffer);
-    pixel_buffer_free(assets->charmap_white);
-    pixel_buffer_free(assets->triangle_up_texture);
-
     mesh_free(assets->gba_mesh);
     mesh_free(assets->cube_mesh);
     mesh_free(assets->quad_mesh);
     mesh_free(assets->triangle_mesh);
 
     mfpb_free(assets->earth_mfpb);
+
+    textures_free(assets->textures);
 
     free(assets);
 }
@@ -557,4 +581,244 @@ Mesh *mesh_load_from_obj(const char *filename)
     // the number of normals and texcoords match the number of vertices, etc.
 
     return mesh;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Textures Management
+////////////////////////////////////////////////////////////////////////////////
+Textures *textures_new(void)
+{
+    Textures *textures = (Textures *)malloc(sizeof(Textures));
+    if (!textures)
+    {
+        fprintf(stderr, "Failed to allocate memory for Textures.\n");
+        return NULL;
+    }
+    textures->entries = NULL;
+    textures->last = NULL;
+    textures->num_entries = 0;
+    return textures;
+}
+
+void textures_free(Textures *textures)
+{
+    if (!textures)
+        return;
+
+    TexturesEntry *current = textures->entries;
+    while (current)
+    {
+        TexturesEntry *next = current->next;
+
+        // Free the path and filename strings
+        if (current->path)
+            free(current->path);
+        if (current->filename)
+            free(current->filename);
+
+        // Free the PixelBuffer
+        if (current->texture)
+            pixel_buffer_free(current->texture);
+
+        // Free the entry itself
+        free(current);
+
+        current = next;
+    }
+
+    // Finally, free the Textures struct
+    free(textures);
+}
+
+// Add a new texture to the Textures struct
+// Returns 0 on success, -1 on failure
+int textures_add(Textures *textures, const char *path, const char *filename)
+{
+    if (!textures || !path || !filename)
+    {
+        fprintf(stderr, "Invalid arguments to textures_add.\n");
+        return -1;
+    }
+
+    // Allocate memory for the new entry
+    TexturesEntry *new_entry = (TexturesEntry *)malloc(sizeof(TexturesEntry));
+    if (!new_entry)
+    {
+        fprintf(stderr, "Failed to allocate memory for TexturesEntry.\n");
+        return -1;
+    }
+
+    // Duplicate the path and filename strings
+    new_entry->path = strdup(path);
+    if (!new_entry->path)
+    {
+        fprintf(stderr, "Failed to duplicate path string.\n");
+        free(new_entry);
+        return -1;
+    }
+
+    new_entry->filename = strdup(filename);
+    if (!new_entry->filename)
+    {
+        fprintf(stderr, "Failed to duplicate filename string.\n");
+        free(new_entry->path);
+        free(new_entry);
+        return -1;
+    }
+
+    // Construct the full path for loading the texture
+    size_t path_len = strlen(path);
+    int needs_slash = (path[path_len - 1] != '/');
+    size_t full_path_length = path_len + (needs_slash ? 1 : 0) + strlen(filename) + 1; // '/' + filename + '\0'
+    char *full_path = (char *)malloc(full_path_length);
+    if (!full_path)
+    {
+        fprintf(stderr, "Failed to allocate memory for full path.\n");
+        free(new_entry->path);
+        free(new_entry->filename);
+        free(new_entry);
+        return -1;
+    }
+
+    // Concatenate path and filename with '/' if necessary
+    if (needs_slash)
+    {
+        snprintf(full_path, full_path_length, "%s/%s", path, filename);
+    }
+    else
+    {
+        snprintf(full_path, full_path_length, "%s%s", path, filename);
+    }
+
+    // Load the texture using pixelbuffer_load_from_png
+    new_entry->texture = pixelbuffer_load_from_png(full_path);
+    if (!new_entry->texture)
+    {
+        fprintf(stderr, "Failed to load texture from %s.\n", full_path);
+        free(full_path);
+        free(new_entry->path);
+        free(new_entry->filename);
+        free(new_entry);
+        return -1;
+    }
+
+    free(full_path);
+
+    // Initialize the next pointer
+    new_entry->next = NULL;
+
+    // Add the new entry to the linked list
+    if (!textures->entries)
+    {
+        // First entry in the list
+        textures->entries = new_entry;
+        textures->last = new_entry;
+    }
+    else
+    {
+        // Append to the end and update the last pointer
+        textures->last->next = new_entry;
+        textures->last = new_entry;
+    }
+
+    textures->num_entries += 1;
+
+    return 0;
+}
+
+PixelBuffer *textures_get(Textures *textures, const char *filename)
+{
+    if (!textures || !filename)
+        return NULL;
+
+    TexturesEntry *current = textures->entries;
+    while (current)
+    {
+        if (strcmp(current->filename, filename) == 0)
+        {
+            return current->texture;
+        }
+        current = current->next;
+    }
+
+    // If not found, return NULL
+    return NULL;
+}
+
+void textures_print(Textures *textures)
+{
+    if (!textures)
+    {
+        printf("Textures is NULL.\n");
+        return;
+    }
+
+    printf("Total Textures: %d\n", textures->num_entries);
+    printf("Textures List:\n");
+    printf("----------------------------\n");
+
+    TexturesEntry *current = textures->entries;
+    int index = 1;
+    while (current)
+    {
+        printf("Texture %d:\n", index);
+        printf("  Path: %s\n", current->path);
+        printf("  Filename: %s\n", current->filename);
+        printf("  Dimensions: %dx%d\n", current->texture->width, current->texture->height);
+        printf("----------------------------\n");
+        current = current->next;
+        index++;
+    }
+}
+
+static int has_png_extension(const char *filename)
+{
+    if (!filename)
+        return 0;
+    const char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename)
+        return 0;
+    return (strcasecmp(dot, ".png") == 0); // Case-insensitive comparison
+}
+
+int textures_load_from_directory(Textures *textures, const char *directory_path)
+{
+    if (!textures || !directory_path)
+    {
+        fprintf(stderr, "Invalid arguments to textures_load_from_directory.\n");
+        return -1;
+    }
+
+    DIR *dir;
+    struct dirent *entry;
+
+    dir = opendir(directory_path);
+    if (!dir)
+    {
+        perror("opendir");
+        fprintf(stderr, "Failed to open directory: %s\n", directory_path);
+        return -1;
+    }
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        // Skip directories
+        if (entry->d_type == DT_DIR)
+            continue;
+
+        const char *filename = entry->d_name;
+
+        if (has_png_extension(filename))
+        {
+            // Add texture
+            if (textures_add(textures, directory_path, filename) != 0)
+            {
+                fprintf(stderr, "Failed to add texture: %s\n", filename);
+                // Continue loading other textures despite failure
+            }
+        }
+    }
+
+    closedir(dir);
+    return 0;
 }

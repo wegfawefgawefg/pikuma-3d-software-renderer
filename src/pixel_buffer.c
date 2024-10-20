@@ -398,12 +398,8 @@ void color_rotate(PixelBuffer *pb, float hue_shift)
     }
 }
 
-PixelBuffer *pixelbuffer_load_from_png(const char *filename)
+PixelBuffer *pixelbuffer_load_from_png(const char *path)
 {
-    // append "./assets/textures/" to the front of the filename to get the path
-    char path[512];
-    snprintf(path, sizeof(path), "./assets/textures/%s", filename);
-
     // print the path
     printf("Loading image from path: %s\n", path);
 

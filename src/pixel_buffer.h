@@ -38,7 +38,7 @@ void blit_string(PixelBuffer *target_pb, PixelBuffer *letters_pb, const char *st
 
 IVec2 calculate_new_top_left(PixelBuffer *src, float degrees, Vec2 center_of_rotation);
 void color_rotate(PixelBuffer *pb, float hue_shift);
-PixelBuffer *pixelbuffer_load_from_png(const char *filename);
+PixelBuffer *pixelbuffer_load_from_png(const char *path);
 void draw_outline(PixelBuffer *pb, uint32_t color);
 IVec2 get_center_of_pixelbuffer(PixelBuffer *pb);
 
