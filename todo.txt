@@ -1,0 +1,9 @@
+- lets just define material structs first
+- and load them
+
+can think about how to arrange them later
+
+- multiple material and group mesh submesh stuff
+- change linked list texture thing to an array with 
+- change lsearch in array texture ds to bsearch
+

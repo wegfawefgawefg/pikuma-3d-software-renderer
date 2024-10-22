@@ -12,7 +12,7 @@
 #include "step.h"
 #include "draw.h"
 #include "assets.h"
-#include "pixel_buffer.h"
+#include "texture.h"
 #include "f_texture.h"
 
 int WIDTH;
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
         RENDER_WIDTH, RENDER_HEIGHT);
     //// All the real rendering is happening on the pixel buffer via cpu.
-    PixelBuffer *pixel_buffer = pixel_buffer_new(RENDER_WIDTH, RENDER_HEIGHT);
+    Texture *texture = texture_new(RENDER_WIDTH, RENDER_HEIGHT);
     FTexture *z_buffer = f_texture_new(RENDER_WIDTH, RENDER_HEIGHT);
 
     // Load assets
@@ -98,11 +98,11 @@ int main(int argc, char *argv[])
 
         process_input(state);
         step(state);
-        clear_pixel_buffer(pixel_buffer, 0x00000000);
+        texture_clear(texture);
         f_texture_fill_float_max(z_buffer);
-        // fade_pixel_buffer(pixel_buffer, 2);
-        // color_rotate(pixel_buffer, 10.0);
-        draw(pixel_buffer, z_buffer, state, assets);
+        // fade_texture(texture, 2);
+        // color_rotate(texture, 10.0);
+        draw(texture, z_buffer, state, assets);
 
         // clear the render texture
         SDL_SetRenderTarget(renderer, renderTexture);
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
         SDL_RenderClear(renderer);
 
         // copy pixel buffer to render texture
-        copy_to_texture(pixel_buffer, renderTexture);
+        copy_to_texture(texture, renderTexture);
 
         // Draw the render texture to the window
         SDL_Rect destRect = {0, 0, WIDTH, HEIGHT};
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
     }
 
     // Clean up
-    pixel_buffer_free(pixel_buffer);
+    texture_free(texture);
     free_state(state);
 
     TTF_CloseFont(font);

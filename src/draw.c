@@ -6,7 +6,7 @@
 #include "primitives.h"
 #include "input.h"
 #include "colors.h"
-#include "pixel_buffer.h"
+#include "texture.h"
 #include "assets.h"
 #include "utils.h"
 #include "vec2.h"
@@ -19,11 +19,11 @@
 #include "light.h"
 
 void draw_mesh(
-    PixelBuffer *pb,
+    Texture *pb,
     FTexture *z_buffer,
 
     State *state,
-    PixelBuffer *texture,
+    Texture *texture,
     SFA *vertices,
     SU32A *indices,
     SFA *texcoords,
@@ -109,7 +109,7 @@ void draw_mesh(
     sfa_free(normals);
 }
 
-void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
+void draw(Texture *pb, FTexture *z_buffer, State *state, Assets *assets)
 {
     // IVec2 screen_center = ivec2_create(pb->width / 2, pb->height / 2);
     draw_grid(pb, ivec2_create(0, 0), ivec2_create(pb->width - 1, pb->height - 1), 20, COLOR_GRAY_DARK);
@@ -122,10 +122,10 @@ void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
 
     float scalef = 20.0;
     Mesh *mesh = assets->gba_mesh;
-    PixelBuffer *texture = textures_get(assets->textures, "gba.png");
+    Texture *texture = textures_get(assets->textures, "gba.png");
     // Mesh *mesh = assets->earth_mesh;
-    // PixelBuffer *texture = assets->manhat_texture;
-    // PixelBuffer *texture = assets->earth_mfpb->frames[assets->earth_mfpb->current_frame];
+    // Texture *texture = assets->manhat_texture;
+    // Texture *texture = assets->earth_mfpb->frames[assets->earth_mfpb->current_frame];
 
     float x_pos = 0.0;
     float y_pos = 0.0;
@@ -181,13 +181,13 @@ void draw(PixelBuffer *pb, FTexture *z_buffer, State *state, Assets *assets)
             // float map_range(float value, float in_min, float in_max, float out_min, float out_max);
             int sample_x = (int)map_range(x, x_start, x_end, 0, pb->width - 1);
             int sample_y = (int)map_range(y, y_start, y_end, pb->height - 1, 0);
-            uint32_t color = pixel_buffer_get(pb, sample_x, sample_y);
+            uint32_t color = texture_get(pb, sample_x, sample_y);
             // replace clear with black
             if (color == 0x00000000)
             {
                 color = 0x000000FF;
             }
-            pixel_buffer_set(texture, x, y, color);
+            texture_set(texture, x, y, color);
         }
     }
 }

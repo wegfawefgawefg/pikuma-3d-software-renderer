@@ -5,9 +5,11 @@
 
 #include <SDL2/SDL.h>
 
-#include "pixel_buffer.h"
+#include "texture.h"
 #include "stb_image.h"
 #include "mesh.h"
+#include "texture_multiframe.h"
+#include "texture_management.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // MISC
@@ -26,37 +28,6 @@ void sized_sdl_texture_free(SizedSDLTexture *sized_sdl_texture);
 Mesh *mesh_load_from_obj(const char *filename);
 
 ////////////////////////////////////////////////////////////////////////////////
-// Textures Management
-////////////////////////////////////////////////////////////////////////////////
-typedef struct TexturesEntry
-{
-    char *path;
-    char *filename;
-    PixelBuffer *texture;
-    struct TexturesEntry *next;
-} TexturesEntry;
-
-typedef struct
-{
-    TexturesEntry *entries;
-    TexturesEntry *last;
-    int num_entries;
-} Textures;
-
-// Interface
-//// Basic
-Textures *textures_new(void);
-void textures_free(Textures *textures);
-
-//// Crud
-int textures_add(Textures *textures, const char *path, const char *filename);
-PixelBuffer *textures_get(Textures *textures, const char *filename);
-int textures_load_from_directory(Textures *textures, const char *directory_path);
-
-//// Info
-void textures_print(Textures *textures);
-
-////////////////////////////////////////////////////////////////////////////////
 // Assets
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -69,11 +40,11 @@ typedef struct
     Mesh *quad_mesh;
     Mesh *triangle_mesh;
 
-    // Textures: linked list of PixelBuffers
-    Textures *textures;
+    // TextureManager manager
+    TextureManager *textures;
 
-    // Animated Textures
-    MultiFramePixelBuffer *earth_mfpb;
+    // Animated TextureManager
+    MultiFrameTexture *earth_mfpb;
 } Assets;
 
 Assets *assets_new(void);

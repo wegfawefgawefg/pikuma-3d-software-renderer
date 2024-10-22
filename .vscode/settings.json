@@ -16,7 +16,7 @@
         "utils.h": "c",
         "vec2.h": "c",
         "su32a.h": "c",
-        "pixel_buffer.h": "c",
+        "texture.h": "c",
         "system_error": "c"
     }
 }

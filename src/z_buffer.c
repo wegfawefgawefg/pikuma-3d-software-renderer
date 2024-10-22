@@ -1,10 +1,10 @@
 #include "f_texture.h"
-#include "pixel_buffer.h"
+#include "texture.h"
 #include "colors.h"
 #include "utils.h"
 #include "draw_lib.h"
 
-void debug_draw_z_buffer(PixelBuffer *pb, FTexture *z_buffer)
+void debug_draw_z_buffer(Texture *pb, FTexture *z_buffer)
 {
     // get min and max z
     float min_z = FLT_MAX;
@@ -35,7 +35,7 @@ void debug_draw_z_buffer(PixelBuffer *pb, FTexture *z_buffer)
             z /= 500.0f;
             uint8_t z8 = (uint8_t)(z * 255.0f);
             uint32_t color = color_from_rgb(z8, z8, z8);
-            pixel_buffer_set(pb, x / mapscale, y / mapscale, color);
+            texture_set(pb, x / mapscale, y / mapscale, color);
 
             // if (z < 500.0f)
             // {
@@ -71,10 +71,10 @@ void debug_draw_z_buffer(PixelBuffer *pb, FTexture *z_buffer)
 //         {
 //             for (int x = 0; x < face_buffer->width; x += (int)mapscale)
 //             {
-//                 uint32_t face = pixel_buffer_get(face_buffer, x, y);
+//                 uint32_t face = texture_get(face_buffer, x, y);
 //                 face = map_range(face, min_face, max_face, 100, 255);
 //                 uint32_t color = color_from_rgb(face, face, face);
-//                 pixel_buffer_set(pb, x / mapscale, y / mapscale, color);
+//                 texture_set(pb, x / mapscale, y / mapscale, color);
 //             }
 //         }
 //     }

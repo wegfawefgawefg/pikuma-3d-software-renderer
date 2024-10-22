@@ -3,4 +3,4 @@
 #include "draw_lib.h"
 #include "utils.h"
 
-void select_your_shape(PixelBuffer *pb, State *state, Assets *assets) {}
+void select_your_shape(Texture *pb, State *state, Assets *assets) {}

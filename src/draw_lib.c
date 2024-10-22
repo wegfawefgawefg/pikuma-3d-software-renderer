@@ -4,7 +4,7 @@
 #include "vec2.h"
 #include "f_texture.h"
 
-void draw_line(PixelBuffer *pb, int x0, int y0, int x1, int y1, uint32_t color)
+void draw_line(Texture *pb, int x0, int y0, int x1, int y1, uint32_t color)
 {
     // Bresenham's line algorithm
     int dx = abs(x1 - x0);
@@ -18,7 +18,7 @@ void draw_line(PixelBuffer *pb, int x0, int y0, int x1, int y1, uint32_t color)
 
     while (1)
     {
-        pixel_buffer_set_alpha(pb, x0, y0, color);
+        texture_set_alpha(pb, x0, y0, color);
 
         if (x0 == x1 && y0 == y1)
         {
@@ -39,7 +39,7 @@ void draw_line(PixelBuffer *pb, int x0, int y0, int x1, int y1, uint32_t color)
     }
 }
 
-void draw_lines(PixelBuffer *pb, SFA *points, uint32_t color)
+void draw_lines(Texture *pb, SFA *points, uint32_t color)
 {
     for (int i = 0; i < points->length; i += 2)
     {
@@ -51,18 +51,18 @@ void draw_lines(PixelBuffer *pb, SFA *points, uint32_t color)
     }
 }
 
-void draw_rect(PixelBuffer *pb, int x, int y, int w, int h, uint32_t color)
+void draw_rect(Texture *pb, int x, int y, int w, int h, uint32_t color)
 {
     for (int i = x; i < x + w; i++)
     {
         for (int j = y; j < y + h; j++)
         {
-            pixel_buffer_set_alpha(pb, i, j, color);
+            texture_set_alpha(pb, i, j, color);
         }
     }
 }
 
-void draw_rect_lines(PixelBuffer *pb, int x, int y, int w, int h, uint32_t color)
+void draw_rect_lines(Texture *pb, int x, int y, int w, int h, uint32_t color)
 {
     draw_line(pb, x, y, x + w, y, color);
     draw_line(pb, x + w, y, x + w, y + h, color);
@@ -70,7 +70,7 @@ void draw_rect_lines(PixelBuffer *pb, int x, int y, int w, int h, uint32_t color
     draw_line(pb, x, y + h, x, y, color);
 }
 
-void draw_triangle_lines(PixelBuffer *pb, Triangle t, uint32_t color)
+void draw_triangle_lines(Texture *pb, Triangle t, uint32_t color)
 {
     draw_line(pb, t.p1.x, t.p1.y, t.p2.x, t.p2.y, color);
     draw_line(pb, t.p2.x, t.p2.y, t.p3.x, t.p3.y, color);
@@ -82,7 +82,7 @@ static inline int edge_function(IVec2 a, IVec2 b, IVec2 p)
     return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
 }
 
-void draw_triangle(PixelBuffer *pb, Triangle t, uint32_t color)
+void draw_triangle(Texture *pb, Triangle t, uint32_t color)
 {
     IVec2 p1 = vec2_to_ivec2(t.p1);
     IVec2 p2 = vec2_to_ivec2(t.p2);
@@ -118,7 +118,7 @@ void draw_triangle(PixelBuffer *pb, Triangle t, uint32_t color)
             {
                 if (w1 <= 0 && w2 <= 0 && w3 <= 0)
                 {
-                    pixel_buffer_set_alpha(pb, p.x, p.y, color);
+                    texture_set_alpha(pb, p.x, p.y, color);
                 }
             }
         }
@@ -133,7 +133,7 @@ void draw_triangle(PixelBuffer *pb, Triangle t, uint32_t color)
 
     can use f_texture get and set
 */
-void draw_triangle_centroid_z_per_pixel_z_check(PixelBuffer *pb, FTexture *z_buffer, Triangle t, uint32_t color, float z)
+void draw_triangle_centroid_z_per_pixel_z_check(Texture *pb, FTexture *z_buffer, Triangle t, uint32_t color, float z)
 {
     IVec2 p1 = vec2_to_ivec2(t.p1);
     IVec2 p2 = vec2_to_ivec2(t.p2);
@@ -173,7 +173,7 @@ void draw_triangle_centroid_z_per_pixel_z_check(PixelBuffer *pb, FTexture *z_buf
                     float z_buffer_value = f_texture_get(z_buffer, p.x, p.y);
                     if (z > 80.0f && z < z_buffer_value)
                     {
-                        pixel_buffer_set_alpha(pb, p.x, p.y, color);
+                        texture_set_alpha(pb, p.x, p.y, color);
                         f_texture_set(z_buffer, p.x, p.y, z);
                     }
                 }
@@ -220,7 +220,7 @@ void sort_verticies_by_y_and_swap_uv_indices(Vec2 *v0, Vec2 *v1, Vec2 *v2, Vec2 
     }
 }
 
-void draw_triangle_scanline_constant_z(PixelBuffer *pb, FTexture *z_buffer, Triangle t, uint32_t color, float z)
+void draw_triangle_scanline_constant_z(Texture *pb, FTexture *z_buffer, Triangle t, uint32_t color, float z)
 {
     Vec2 v0 = t.p1;
     Vec2 v1 = t.p2;
@@ -273,7 +273,7 @@ void draw_triangle_scanline_constant_z(PixelBuffer *pb, FTexture *z_buffer, Tria
             float z_buffer_value = f_texture_get(z_buffer, x, y);
             if (z < z_buffer_value)
             {
-                pixel_buffer_set_alpha(pb, x, y, color);
+                texture_set_alpha(pb, x, y, color);
                 f_texture_set(z_buffer, x, y, z);
             }
         }
@@ -281,12 +281,12 @@ void draw_triangle_scanline_constant_z(PixelBuffer *pb, FTexture *z_buffer, Tria
 }
 
 void draw_triangle_scanline_constant_z_with_face_buffer(
-    PixelBuffer *pb,
+    Texture *pb,
     FTexture *z_buffer,
     Triangle t,
     uint32_t color,
     float z,
-    PixelBuffer *face_buffer,
+    Texture *face_buffer,
     uint32_t face)
 {
     Vec2 v0 = t.p1;
@@ -340,9 +340,9 @@ void draw_triangle_scanline_constant_z_with_face_buffer(
             float z_buffer_value = f_texture_get(z_buffer, x, y);
             if (z < z_buffer_value)
             {
-                pixel_buffer_set_alpha(pb, x, y, color);
+                texture_set_alpha(pb, x, y, color);
                 f_texture_set(z_buffer, x, y, z);
-                pixel_buffer_set(face_buffer, x, y, face);
+                texture_set(face_buffer, x, y, face);
             }
         }
     }
@@ -350,8 +350,8 @@ void draw_triangle_scanline_constant_z_with_face_buffer(
 
 // Function to draw a triangle with scanline rasterization and texture sampling
 void draw_triangle_scanline_with_texture(
-    PixelBuffer *pb,
-    PixelBuffer *texture,
+    Texture *pb,
+    Texture *texture,
     FTexture *z_buffer,
     Triangle t,
     Triangle t_uv,
@@ -437,21 +437,21 @@ void draw_triangle_scanline_with_texture(
             int tex_y = (int)(clamped_v * (texture->height - 1));
 
             // Sample the texture color at (tex_x, tex_y)
-            uint32_t sampled_color = pixel_buffer_get(texture, tex_x, tex_y);
+            uint32_t sampled_color = texture_get(texture, tex_x, tex_y);
 
             // Z-buffer check and update
             float z_buffer_value = f_texture_get(z_buffer, x, y);
             if (z < z_buffer_value)
             {
                 // Update the pixel color in the framebuffer
-                pixel_buffer_set_alpha(pb, x, y, sampled_color);
+                texture_set_alpha(pb, x, y, sampled_color);
 
                 // Update the Z-buffer with the new Z value
                 f_texture_set(z_buffer, x, y, z);
 
                 // Optionally, set the face identifier in the face buffer
                 // if (face_buffer != NULL)
-                //     pixel_buffer_set(face_buffer, x, y, face);
+                //     texture_set(face_buffer, x, y, face);
             }
 
             // Increment UV coordinates for the next pixel
@@ -462,20 +462,20 @@ void draw_triangle_scanline_with_texture(
 }
 
 // //////////////////////// COMPOUND DRAWING FUNCTIONS ////////////////////////
-void draw_cursor(PixelBuffer *pb, int x, int y, int size, uint32_t color)
+void draw_cursor(Texture *pb, int x, int y, int size, uint32_t color)
 {
     draw_line(pb, x - size, y, x + size, y, color);
     draw_line(pb, x, y - size, x, y + size, color);
 }
 
-void draw_arrow(PixelBuffer *pb, int x, int y, int size, uint32_t color)
+void draw_arrow(Texture *pb, int x, int y, int size, uint32_t color)
 {
     draw_line(pb, x, y, x + size, y, color);
     draw_line(pb, x + size, y, x + size - size / 4, y - size / 4, color);
     draw_line(pb, x + size, y, x + size - size / 4, y + size / 4, color);
 }
 
-void draw_grid(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32_t color)
+void draw_grid(Texture *pb, IVec2 start, IVec2 end, int spacing, uint32_t color)
 {
     for (int x = start.x; x < end.x; x += spacing)
     {
@@ -492,36 +492,36 @@ void draw_grid(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32_t co
 }
 
 // draw a grid with dots instead of , puts a dot at each intersection
-void draw_grid_dots(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32_t color)
+void draw_grid_dots(Texture *pb, IVec2 start, IVec2 end, int spacing, uint32_t color)
 {
     for (int x = start.x; x < end.x + 1; x += spacing)
     {
         for (int y = start.y; y < end.y + 1; y += spacing)
         {
-            pixel_buffer_set(pb, x, y, color);
+            texture_set(pb, x, y, color);
         }
     }
 
     // draw the rightmost and bottommost line of dots
     for (int x = start.x; x < end.x; x += spacing)
     {
-        pixel_buffer_set(pb, x, end.y, color);
+        texture_set(pb, x, end.y, color);
     }
 
     for (int y = start.y; y < end.y; y += spacing)
     {
-        pixel_buffer_set(pb, end.x, y, color);
+        texture_set(pb, end.x, y, color);
     }
 
     // bottom right corner
-    pixel_buffer_set(pb, end.x, end.y, color);
+    texture_set(pb, end.x, end.y, color);
 }
 
 // draw_checkerboard
 // takes in two colors and the size of the squares
 //    draw_checkerboard(pb, ivec2_create(0, 0), ivec2_create(pb->width - 1, pb->height - 1), 20, 0xFF333333, 0xFF444444);
 
-void draw_checkerboard(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uint32_t color1, uint32_t color2)
+void draw_checkerboard(Texture *pb, IVec2 start, IVec2 end, int spacing, uint32_t color1, uint32_t color2)
 {
     for (int x = start.x; x < end.x + 1; x += spacing)
     {
@@ -539,7 +539,7 @@ void draw_checkerboard(PixelBuffer *pb, IVec2 start, IVec2 end, int spacing, uin
     }
 }
 
-void draw_ortho_quad_lines(PixelBuffer *pb, Quad *quad, uint32_t color)
+void draw_ortho_quad_lines(Texture *pb, Quad *quad, uint32_t color)
 {
     draw_line(pb, quad->p1.x, quad->p1.y, quad->p2.x, quad->p2.y, color);
     draw_line(pb, quad->p2.x, quad->p2.y, quad->p3.x, quad->p3.y, color);
@@ -547,7 +547,7 @@ void draw_ortho_quad_lines(PixelBuffer *pb, Quad *quad, uint32_t color)
     draw_line(pb, quad->p4.x, quad->p4.y, quad->p1.x, quad->p1.y, color);
 }
 
-void draw_ortho_quad(PixelBuffer *pb, Quad *quad, uint32_t color)
+void draw_ortho_quad(Texture *pb, Quad *quad, uint32_t color)
 {
     Triangle t1 = {vec2_create(quad->p1.x, quad->p1.y), vec2_create(quad->p2.x, quad->p2.y), vec2_create(quad->p3.x, quad->p3.y)};
     Triangle t2 = {vec2_create(quad->p1.x, quad->p1.y), vec2_create(quad->p3.x, quad->p3.y), vec2_create(quad->p4.x, quad->p4.y)};
@@ -557,18 +557,18 @@ void draw_ortho_quad(PixelBuffer *pb, Quad *quad, uint32_t color)
 }
 
 // in this case the SFA is 2d vertices: x,y
-void draw_points(PixelBuffer *pb, SFA *points, uint32_t color)
+void draw_points(Texture *pb, SFA *points, uint32_t color)
 {
     for (int i = 0; i < points->length; i += 2)
     {
         int x = points->data[i];
         int y = points->data[i + 1];
-        pixel_buffer_set(pb, x, y, color);
+        texture_set(pb, x, y, color);
     }
 }
 
 // in this case the SFA is 2d vertices: x,y,x,y
-void draw_tris(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t color)
+void draw_tris(Texture *pb, SFA *vertices, SU32A *indices, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -585,7 +585,7 @@ void draw_tris(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t color)
     }
 }
 
-void draw_tris_with_colors(PixelBuffer *pb, SFA *vertices, SU32A *indices, SU32A *colors)
+void draw_tris_with_colors(Texture *pb, SFA *vertices, SU32A *indices, SU32A *colors)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -615,7 +615,7 @@ void draw_tris_with_colors(PixelBuffer *pb, SFA *vertices, SU32A *indices, SU32A
     else we will skip the pixel
 */
 void draw_tris_with_colors_and_depth(
-    PixelBuffer *pb,
+    Texture *pb,
     FTexture *z_buffer,
     SFA *vertices,
     SU32A *indices,
@@ -670,9 +670,9 @@ void draw_tris_with_colors_and_depth(
 
 // identical but puts the face index in the face buffer for each pixel
 void draw_tris_with_colors_and_depth_with_face_buffer(
-    PixelBuffer *pb,
+    Texture *pb,
     FTexture *z_buffer,
-    PixelBuffer *face_buffer,
+    Texture *face_buffer,
     SFA *vertices,
     SU32A *indices,
     SU32A *colors)
@@ -725,8 +725,8 @@ void draw_tris_with_colors_and_depth_with_face_buffer(
 }
 
 void draw_tris_textured(
-    PixelBuffer *pb,
-    PixelBuffer *texture,
+    Texture *pb,
+    Texture *texture,
     FTexture *z_buffer,
     SFA *vertices, // x,y,w,x,y,w,x,y,w
     SU32A *indices,
@@ -799,7 +799,7 @@ void draw_tris_textured(
 }
 
 // // in the center of each try in red just draw the face index
-void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SU32A *indices, uint32_t size, uint32_t color)
+void draw_tris_face_numbers(Texture *pb, Texture *charmap, SFA *vertices, SU32A *indices, uint32_t size, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -818,7 +818,7 @@ void draw_tris_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices
     }
 }
 
-void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charmap, SFA *vertices, SU32A *indices, SU32A *colors, uint32_t size, uint32_t color)
+void draw_tris_with_colors_and_face_numbers(Texture *pb, Texture *charmap, SFA *vertices, SU32A *indices, SU32A *colors, uint32_t size, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -842,7 +842,7 @@ void draw_tris_with_colors_and_face_numbers(PixelBuffer *pb, PixelBuffer *charma
 }
 
 // in this case the SFA is 2d vertices: x,y
-void draw_tris_lines(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t color)
+void draw_tris_lines(Texture *pb, SFA *vertices, SU32A *indices, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
     {
@@ -860,7 +860,7 @@ void draw_tris_lines(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t co
 }
 
 // in this case the SFA is 2d verticies with depth: x,y,_z do not use the z value
-void draw_tris_lines_with_depth(PixelBuffer *pb, SFA *vertices, SU32A *indices, uint32_t color)
+void draw_tris_lines_with_depth(Texture *pb, SFA *vertices, SU32A *indices, uint32_t color)
 {
     for (int i = 0; i < indices->length; i += 3)
     {

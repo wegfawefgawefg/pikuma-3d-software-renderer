@@ -1,4 +1,4 @@
-#include "pixel_buffer.h"
+#include "texture.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,9 +10,9 @@
 
 #include "utils.h"
 
-PixelBuffer *pixel_buffer_new(int width, int height)
+Texture *texture_new(int width, int height)
 {
-    PixelBuffer *pb = (PixelBuffer *)malloc(sizeof(PixelBuffer));
+    Texture *pb = (Texture *)malloc(sizeof(Texture));
     if (!pb)
     {
         return NULL;
@@ -30,18 +30,18 @@ PixelBuffer *pixel_buffer_new(int width, int height)
     return pb;
 }
 
-void pixel_buffer_free(PixelBuffer *pb)
+void texture_free(Texture *pb)
 {
     free(pb->pixels);
     free(pb);
 }
 
-void copy_to_texture(PixelBuffer *pb, SDL_Texture *texture)
+void copy_to_texture(Texture *pb, SDL_Texture *texture)
 {
     SDL_UpdateTexture(texture, NULL, pb->pixels, pb->width * sizeof(uint32_t));
 }
 
-void pixel_buffer_set(PixelBuffer *pb, int x, int y, uint32_t color)
+void texture_set(Texture *pb, int x, int y, uint32_t color)
 {
     if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
     {
@@ -50,7 +50,7 @@ void pixel_buffer_set(PixelBuffer *pb, int x, int y, uint32_t color)
     pb->pixels[y * pb->width + x] = color;
 }
 
-void pixel_buffer_set_alpha(PixelBuffer *pb, int x, int y, uint32_t color)
+void texture_set_alpha(Texture *pb, int x, int y, uint32_t color)
 {
     if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
     {
@@ -75,7 +75,7 @@ void pixel_buffer_set_alpha(PixelBuffer *pb, int x, int y, uint32_t color)
     // If alpha is 0, do nothing (fully transparent)
 }
 
-uint32_t pixel_buffer_get(PixelBuffer *pb, int x, int y)
+uint32_t texture_get(Texture *pb, int x, int y)
 {
     if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
     {
@@ -84,16 +84,21 @@ uint32_t pixel_buffer_get(PixelBuffer *pb, int x, int y)
     return pb->pixels[y * pb->width + x];
 }
 
-void clear_pixel_buffer(PixelBuffer *pb, uint32_t color)
+void texture_clear(Texture *pb)
 {
     for (int i = 0; i < pb->width * pb->height; i++)
     {
-        pb->pixels[i] = color;
+        pb->pixels[i] = 0;
     }
 }
 
+void texture_print(Texture *pb)
+{
+    printf("Texture: width=%d, height=%d\n", pb->width, pb->height);
+}
+
 // just subtract amount from each color channel and alpha channel, colors are 4 bytes
-void fade_pixel_buffer(PixelBuffer *pb, uint8_t amount)
+void texture_fade(Texture *pb, uint8_t amount)
 {
     for (int i = 0; i < pb->width * pb->height; i++)
     {
@@ -114,7 +119,7 @@ void fade_pixel_buffer(PixelBuffer *pb, uint8_t amount)
     }
 }
 
-void pixel_buffer_fill(PixelBuffer *pb, uint32_t color)
+void texture_fill(Texture *pb, uint32_t color)
 {
     for (int i = 0; i < pb->width * pb->height; i++)
     {
@@ -122,7 +127,7 @@ void pixel_buffer_fill(PixelBuffer *pb, uint32_t color)
     }
 }
 
-PixelBuffer *scale_pixelbuffer(PixelBuffer *src, Vec2 scale)
+Texture *scale_pixelbuffer(Texture *src, Vec2 scale)
 {
     if (!src || scale.x <= 0 || scale.y <= 0)
         return NULL;
@@ -130,7 +135,7 @@ PixelBuffer *scale_pixelbuffer(PixelBuffer *src, Vec2 scale)
     int new_width = (int)(src->width * scale.x);
     int new_height = (int)(src->height * scale.y);
 
-    PixelBuffer *scaled = pixel_buffer_new(new_width, new_height);
+    Texture *scaled = texture_new(new_width, new_height);
     if (!scaled)
         return NULL; // Handle allocation failure
 
@@ -145,15 +150,15 @@ PixelBuffer *scale_pixelbuffer(PixelBuffer *src, Vec2 scale)
             src_x = (src_x >= src->width) ? src->width - 1 : src_x;
             src_y = (src_y >= src->height) ? src->height - 1 : src_y;
 
-            uint32_t color = pixel_buffer_get(src, src_x, src_y);
-            pixel_buffer_set(scaled, x, y, color);
+            uint32_t color = texture_get(src, src_x, src_y);
+            texture_set(scaled, x, y, color);
         }
     }
 
     return scaled;
 }
 
-PixelBuffer *rotate_pixelbuffer(PixelBuffer *src, float degrees)
+Texture *rotate_pixelbuffer(Texture *src, float degrees)
 {
     // Calculate the center of the source image
     float center_x = src->width / 2.0f;
@@ -169,8 +174,8 @@ PixelBuffer *rotate_pixelbuffer(PixelBuffer *src, float degrees)
     int h = src->height;
     int max_dim = (int)ceil(sqrtf(w * w + h * h)) + 1;
 
-    // Create a new PixelBuffer for the rotated image
-    PixelBuffer *rotated = pixel_buffer_new(max_dim, max_dim);
+    // Create a new Texture for the rotated image
+    Texture *rotated = texture_new(max_dim, max_dim);
     if (!rotated)
         return NULL; // Handle allocation failure
 
@@ -193,13 +198,13 @@ PixelBuffer *rotate_pixelbuffer(PixelBuffer *src, float degrees)
             // Check if the source pixel is within the bounds of the source image
             if (sx >= 0 && sx < w && sy >= 0 && sy < h)
             {
-                uint32_t color = pixel_buffer_get(src, sx, sy);
-                pixel_buffer_set(rotated, x, y, color);
+                uint32_t color = texture_get(src, sx, sy);
+                texture_set(rotated, x, y, color);
             }
             else
             {
                 // Set to transparent or background color if out of bounds
-                pixel_buffer_set(rotated, x, y, 0x00000000); // Assuming ARGB format
+                texture_set(rotated, x, y, 0x00000000); // Assuming ARGB format
             }
         }
     }
@@ -207,7 +212,7 @@ PixelBuffer *rotate_pixelbuffer(PixelBuffer *src, float degrees)
     return rotated;
 }
 
-void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
+void blit(Texture *src, Texture *dst, int x, int y)
 {
     // determine the intersection bounds
     int x0 = x;
@@ -227,8 +232,8 @@ void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
     {
         for (int i = x0; i < x1; i++)
         {
-            uint32_t src_color = pixel_buffer_get(src, i - x, j - y);
-            uint32_t dst_color = pixel_buffer_get(dst, i, j);
+            uint32_t src_color = texture_get(src, i - x, j - y);
+            uint32_t dst_color = texture_get(dst, i, j);
 
             // Extract color components and alpha, assume RGBA
             uint8_t src_r = (src_color >> 24) & 0xFF;
@@ -239,7 +244,7 @@ void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
             // If source alpha is max, just copy the source pixel
             if (src_a == 255)
             {
-                pixel_buffer_set(dst, i, j, src_color);
+                texture_set(dst, i, j, src_color);
             }
             else if (src_a > 0)
             { // Only blend if there's some opacity
@@ -270,20 +275,20 @@ void blit(PixelBuffer *src, PixelBuffer *dst, int x, int y)
                 // Combine the blended components
                 uint32_t blended_color = (final_r << 24) | (final_g << 16) | (final_b << 8) | final_a;
 
-                pixel_buffer_set(dst, i, j, blended_color);
+                texture_set(dst, i, j, blended_color);
             }
             // If src_a is 0, we don't need to do anything (keep destination pixel)
         }
     }
 }
 
-void blit_with_scale(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale)
+void blit_with_scale(Texture *src, Texture *dst, IVec2 pos, Vec2 scale)
 {
     if (!src || !dst || scale.x <= 0 || scale.y <= 0)
         return;
 
     // Create a temporary scaled buffer
-    PixelBuffer *scaled = scale_pixelbuffer(src, scale);
+    Texture *scaled = scale_pixelbuffer(src, scale);
     if (!scaled)
         return; // Handle allocation failure
 
@@ -291,13 +296,13 @@ void blit_with_scale(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale)
     blit(scaled, dst, pos.x, pos.y);
 
     // Clean up
-    pixel_buffer_free(scaled);
+    texture_free(scaled);
 }
 
-void blit_with_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float angle, Vec2 center_of_rotation)
+void blit_with_rotation(Texture *src, Texture *dst, IVec2 pos, float angle, Vec2 center_of_rotation)
 {
     // rotate the buffer around its center
-    PixelBuffer *rotated = rotate_pixelbuffer(src, angle);
+    Texture *rotated = rotate_pixelbuffer(src, angle);
 
     Vec2 old_center = ivec2_to_vec2(get_center_of_pixelbuffer(src));
     Vec2 new_center = ivec2_to_vec2(get_center_of_pixelbuffer(rotated));
@@ -309,22 +314,22 @@ void blit_with_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, float ang
     rotated_pos = vec2_sub(rotated_pos, center_to_new_target);
     blit(rotated, dst, rotated_pos.x, rotated_pos.y);
 
-    pixel_buffer_free(rotated);
+    texture_free(rotated);
 }
 
-void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos, Vec2 scale, float angle, Vec2 center_of_rotation)
+void blit_with_scale_and_rotation(Texture *src, Texture *dst, IVec2 pos, Vec2 scale, float angle, Vec2 center_of_rotation)
 {
     if (!src || !dst || scale.x <= 0 || scale.y <= 0)
         return;
 
     // Scale first
-    PixelBuffer *scaled = scale_pixelbuffer(src, scale);
+    Texture *scaled = scale_pixelbuffer(src, scale);
     if (!scaled)
         return; // Handle allocation failure
 
     // Then rotate
-    PixelBuffer *rotated = rotate_pixelbuffer(scaled, angle);
-    pixel_buffer_free(scaled);
+    Texture *rotated = rotate_pixelbuffer(scaled, angle);
+    texture_free(scaled);
     if (!rotated)
         return; // Handle allocation failure
 
@@ -343,10 +348,10 @@ void blit_with_scale_and_rotation(PixelBuffer *src, PixelBuffer *dst, IVec2 pos,
     blit(rotated, dst, new_pos.x, new_pos.y);
 
     // Clean up
-    pixel_buffer_free(rotated);
+    texture_free(rotated);
 }
 
-void blit_dumb(PixelBuffer *src, PixelBuffer *dst, int x, int y)
+void blit_dumb(Texture *src, Texture *dst, int x, int y)
 {
     // determine the intersection bounds
     int x0 = x;
@@ -367,13 +372,13 @@ void blit_dumb(PixelBuffer *src, PixelBuffer *dst, int x, int y)
     {
         for (int i = x0; i < x1; i++)
         {
-            uint32_t src_color = pixel_buffer_get(src, i - x, j - y);
-            pixel_buffer_set(dst, i, j, src_color);
+            uint32_t src_color = texture_get(src, i - x, j - y);
+            texture_set(dst, i, j, src_color);
         }
     }
 }
 
-void color_rotate(PixelBuffer *pb, float hue_shift)
+void color_rotate(Texture *pb, float hue_shift)
 {
     for (int i = 0; i < pb->width * pb->height; i++)
     {
@@ -398,7 +403,7 @@ void color_rotate(PixelBuffer *pb, float hue_shift)
     }
 }
 
-PixelBuffer *pixelbuffer_load_from_png(const char *path)
+Texture *pixelbuffer_load_from_png(const char *path)
 {
     // print the path
     printf("Loading image from path: %s\n", path);
@@ -413,7 +418,7 @@ PixelBuffer *pixelbuffer_load_from_png(const char *path)
     }
 
     // allocate memory for the pixel buffer
-    PixelBuffer *buffer = pixel_buffer_new(width, height);
+    Texture *buffer = texture_new(width, height);
     if (!buffer)
     {
         stbi_image_free(data);
@@ -436,7 +441,7 @@ PixelBuffer *pixelbuffer_load_from_png(const char *path)
     return buffer;
 }
 
-IVec2 calculate_new_top_left(PixelBuffer *src, float degrees, Vec2 center_of_rotation)
+IVec2 calculate_new_top_left(Texture *src, float degrees, Vec2 center_of_rotation)
 {
     // Calculate the center of the source image
     float src_center_x = src->width / 2.0f;
@@ -462,27 +467,27 @@ IVec2 calculate_new_top_left(PixelBuffer *src, float degrees, Vec2 center_of_rot
 }
 
 // function to draw a red outline at the edges of the pixel buffer
-void draw_outline(PixelBuffer *pb, uint32_t color)
+void draw_outline(Texture *pb, uint32_t color)
 {
     for (int i = 0; i < pb->width; i++)
     {
-        pixel_buffer_set(pb, i, 0, color);
-        pixel_buffer_set(pb, i, pb->height - 1, color);
+        texture_set(pb, i, 0, color);
+        texture_set(pb, i, pb->height - 1, color);
     }
     for (int i = 0; i < pb->height; i++)
     {
-        pixel_buffer_set(pb, 0, i, color);
-        pixel_buffer_set(pb, pb->width - 1, i, color);
+        texture_set(pb, 0, i, color);
+        texture_set(pb, pb->width - 1, i, color);
     }
 }
 
 // get center
-IVec2 get_center_of_pixelbuffer(PixelBuffer *pb)
+IVec2 get_center_of_pixelbuffer(Texture *pb)
 {
     return ivec2_create(pb->width / 2, pb->height / 2);
 }
 
-void blit_string(PixelBuffer *target_pb, PixelBuffer *letters_pb, const char *str, int x, int y, int size, uint32_t color)
+void blit_string(Texture *target_pb, Texture *letters_pb, const char *str, int x, int y, int size, uint32_t color)
 {
     int x_pos = x;
     int len = strlen(str);
@@ -493,7 +498,7 @@ void blit_string(PixelBuffer *target_pb, PixelBuffer *letters_pb, const char *st
     }
 }
 
-void blit_letter(PixelBuffer *target_pb, PixelBuffer *letters_pb, uint8_t ascii_value, int x, int y, int size, uint32_t color)
+void blit_letter(Texture *target_pb, Texture *letters_pb, uint8_t ascii_value, int x, int y, int size, uint32_t color)
 {
     // Constants for character dimensions and layout in charmap
     const int char_width = 7;
@@ -515,7 +520,7 @@ void blit_letter(PixelBuffer *target_pb, PixelBuffer *letters_pb, uint8_t ascii_
         for (int cx = 0; cx < char_width; cx++)
         {
             // Get the color from the source (letters) pixel buffer
-            uint32_t sample_color = pixel_buffer_get(letters_pb, src_x + cx, src_y + cy);
+            uint32_t sample_color = texture_get(letters_pb, src_x + cx, src_y + cy);
 
             // Only copy non-transparent pixels (assuming black is transparent in charmap)
             if (sample_color != 0x000000FF)
@@ -527,230 +532,10 @@ void blit_letter(PixelBuffer *target_pb, PixelBuffer *letters_pb, uint8_t ascii_
                     {
                         int target_x = x + (cx * size) + sx;
                         int target_y = y + (cy * size) + sy;
-                        pixel_buffer_set(target_pb, target_x, target_y, color);
+                        texture_set(target_pb, target_x, target_y, color);
                     }
                 }
             }
         }
     }
-}
-
-// mfpb_load_from_gif.c
-
-// Helper function to convert RGB to ARGB format
-static uint32_t RGBToRGBA(int r, int g, int b, int a)
-{
-    // if the image is black return transparent
-    if (r == 0 && g == 0 && b == 0)
-    {
-        return 0;
-    }
-    return ((uint32_t)r << 24) | ((uint32_t)g << 16) | ((uint32_t)b << 8) | (uint32_t)a;
-}
-
-// Helper function to get pixel color from color index
-static uint32_t GetColorFromIndex(const GifFileType *gif, int colorIndex)
-{
-    ColorMapObject *colorMap = gif->SColorMap;
-    if (colorMap == NULL || colorIndex >= colorMap->ColorCount)
-    {
-        // Return transparent if color map is not available or index is out of bounds
-        return RGBToRGBA(0, 0, 0, 0);
-    }
-    GifColorType color = colorMap->Colors[colorIndex];
-    return RGBToRGBA(color.Red, color.Green, color.Blue, 255);
-}
-
-// mfpb new
-MultiFramePixelBuffer *mfpb_new(int num_frames, int width, int height)
-{
-    MultiFramePixelBuffer *mfpb = (MultiFramePixelBuffer *)malloc(sizeof(MultiFramePixelBuffer));
-    if (mfpb == NULL)
-    {
-        return NULL;
-    }
-
-    mfpb->num_frames = num_frames;
-    mfpb->current_frame = 0;
-    mfpb->frames = (PixelBuffer **)malloc(num_frames * sizeof(PixelBuffer *));
-    if (mfpb->frames == NULL)
-    {
-        free(mfpb);
-        return NULL;
-    }
-
-    for (int i = 0; i < num_frames; i++)
-    {
-        mfpb->frames[i] = pixel_buffer_new(width, height);
-        if (mfpb->frames[i] == NULL)
-        {
-            mfpb_free(mfpb);
-            return NULL;
-        }
-    }
-
-    return mfpb;
-}
-
-// mfpb free
-void mfpb_free(MultiFramePixelBuffer *mfpb)
-{
-    if (mfpb == NULL)
-    {
-        return;
-    }
-
-    for (int i = 0; i < mfpb->num_frames; i++)
-    {
-        pixel_buffer_free(mfpb->frames[i]);
-    }
-
-    free(mfpb->frames);
-    free(mfpb);
-}
-
-// mfpb next frame
-void mfpb_next_frame(MultiFramePixelBuffer *mfpb)
-{
-    mfpb->current_frame = (mfpb->current_frame + 1) % mfpb->num_frames;
-}
-
-MultiFramePixelBuffer *mfpb_load_from_gif(const char *filename)
-{
-    char path[512];
-    snprintf(path, sizeof(path), "./assets/animated_textures/%s", filename);
-
-    int error = 0;
-    GifFileType *gif = DGifOpenFileName(path, &error);
-    if (gif == NULL)
-    {
-        fprintf(stderr, "Failed to open GIF file %s: %s\n", filename, GifErrorString(error));
-        return NULL;
-    }
-
-    if (DGifSlurp(gif) == GIF_ERROR)
-    {
-        fprintf(stderr, "Failed to read GIF file %s: %s\n", filename, GifErrorString(gif->Error));
-        DGifCloseFile(gif, &error);
-        return NULL;
-    }
-
-    int num_frames = gif->ImageCount;
-    if (num_frames == 0)
-    {
-        fprintf(stderr, "No frames found in GIF file %s\n", filename);
-        DGifCloseFile(gif, &error);
-        return NULL;
-    }
-
-    // Assuming all frames have the same dimensions as the logical screen
-    int width = gif->SWidth;
-    int height = gif->SHeight;
-
-    MultiFramePixelBuffer *mfpb = mfpb_new(num_frames, width, height);
-    if (mfpb == NULL)
-    {
-        fprintf(stderr, "Failed to allocate MultiFramePixelBuffer\n");
-        DGifCloseFile(gif, &error);
-        return NULL;
-    }
-
-    // Initialize a base frame buffer to handle disposal methods
-    PixelBuffer *base_buffer = pixel_buffer_new(width, height);
-    if (base_buffer == NULL)
-    {
-        fprintf(stderr, "Failed to allocate base PixelBuffer\n");
-        mfpb_free(mfpb);
-        DGifCloseFile(gif, &error);
-        return NULL;
-    }
-    clear_pixel_buffer(base_buffer, RGBToRGBA(0, 0, 0, 0)); // Initialize with transparent
-
-    // Iterate over each frame
-    for (int i = 0; i < num_frames; i++)
-    {
-        SavedImage *frame = &gif->SavedImages[i];
-        GifImageDesc *imageDesc = &frame->ImageDesc;
-
-        // Handle frame position
-        int frameLeft = imageDesc->Left;
-        int frameTop = imageDesc->Top;
-        int frameWidth = imageDesc->Width;
-        int frameHeight = imageDesc->Height;
-
-        // Create a temporary buffer to hold the frame
-        PixelBuffer *temp_buffer = pixel_buffer_new(width, height);
-        if (temp_buffer == NULL)
-        {
-            fprintf(stderr, "Failed to allocate temp PixelBuffer for frame %d\n", i);
-            pixel_buffer_free(base_buffer);
-            mfpb_free(mfpb);
-            DGifCloseFile(gif, &error);
-            return NULL;
-        }
-
-        // Copy the base buffer to temp_buffer
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                uint32_t color = pixel_buffer_get(base_buffer, x, y);
-                pixel_buffer_set(temp_buffer, x, y, color);
-            }
-        }
-
-        // Get the color map for this frame
-        ColorMapObject *colorMap = frame->ImageDesc.ColorMap ? frame->ImageDesc.ColorMap : gif->SColorMap;
-        if (colorMap == NULL)
-        {
-            fprintf(stderr, "No color map found for frame %d\n", i);
-            pixel_buffer_free(temp_buffer);
-            pixel_buffer_free(base_buffer);
-            mfpb_free(mfpb);
-            DGifCloseFile(gif, &error);
-            return NULL;
-        }
-
-        // Iterate over each pixel in the frame
-        for (int y = 0; y < frameHeight; y++)
-        {
-            for (int x = 0; x < frameWidth; x++)
-            {
-                int pixelIndex = y * frameWidth + x;
-                GifByteType colorIndex = frame->RasterBits[pixelIndex];
-
-                // Handle transparency if present
-                uint32_t color = GetColorFromIndex(gif, colorIndex);
-
-                // Check if this pixel is transparent
-                // This example assumes that the transparent color index is set in the Graphics Control Extension
-                // You may need to parse the Graphics Control Extension to get the transparent index
-                // For simplicity, we'll skip handling transparency here
-
-                pixel_buffer_set(temp_buffer, frameLeft + x, frameTop + y, color);
-            }
-        }
-
-        // Add the temp_buffer to MultiFramePixelBuffer
-        mfpb->frames[i] = temp_buffer;
-
-        // Update the base buffer based on the disposal method
-        // For simplicity, we'll assume disposal method 1 (do not dispose)
-        // Handling all disposal methods requires more complex logic
-        // You can refer to the GIF89a specification for details
-
-        // In this example, we overwrite the base buffer with the current frame
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                uint32_t color = pixel_buffer_get(temp_buffer, x, y);
-                pixel_buffer_set(base_buffer, x, y, color);
-            }
-        }
-    }
-
-    pixel_buffer_free(base_buffer);
-    DGifCloseFile(gif, &error);
-    return mfpb;
 }

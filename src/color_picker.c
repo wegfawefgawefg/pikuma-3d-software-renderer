@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "pixel_buffer.h"
+#include "texture.h"
 #include "colors.h"
 #include "globals.h"
 #include "state.h"
@@ -16,7 +16,7 @@
 #define BRIGHTNESS_SLIDER_HEIGHT 30
 #define BRIGHTNESS_SLIDER_MARGIN 10
 
-void draw_brightness_slider(PixelBuffer *pb, State *state)
+void draw_brightness_slider(Texture *pb, State *state)
 {
     // Define brightness slider position
     int slider_x = pb->width - BRIGHTNESS_SLIDER_WIDTH - BRIGHTNESS_SLIDER_MARGIN;
@@ -41,7 +41,7 @@ void draw_brightness_slider(PixelBuffer *pb, State *state)
         // Set the pixel color across the slider's height
         for (int y = 0; y < BRIGHTNESS_SLIDER_HEIGHT; y++)
         {
-            pixel_buffer_set(pb, slider_x + x, slider_y + y, rgb_packed);
+            texture_set(pb, slider_x + x, slider_y + y, rgb_packed);
         }
     }
 
@@ -49,13 +49,13 @@ void draw_brightness_slider(PixelBuffer *pb, State *state)
     uint32_t border_color = 0xFFFFFFFF; // White border
     for (int x = 0; x < BRIGHTNESS_SLIDER_WIDTH; x++)
     {
-        pixel_buffer_set(pb, slider_x + x, slider_y, border_color);
-        pixel_buffer_set(pb, slider_x + x, slider_y + BRIGHTNESS_SLIDER_HEIGHT - 1, border_color);
+        texture_set(pb, slider_x + x, slider_y, border_color);
+        texture_set(pb, slider_x + x, slider_y + BRIGHTNESS_SLIDER_HEIGHT - 1, border_color);
     }
     for (int y = 0; y < BRIGHTNESS_SLIDER_HEIGHT; y++)
     {
-        pixel_buffer_set(pb, slider_x, slider_y + y, border_color);
-        pixel_buffer_set(pb, slider_x + BRIGHTNESS_SLIDER_WIDTH - 1, slider_y + y, border_color);
+        texture_set(pb, slider_x, slider_y + y, border_color);
+        texture_set(pb, slider_x + BRIGHTNESS_SLIDER_WIDTH - 1, slider_y + y, border_color);
     }
 
     // Draw marker indicating current brightness
@@ -71,12 +71,12 @@ void draw_brightness_slider(PixelBuffer *pb, State *state)
         if (px >= slider_x && px < slider_x + BRIGHTNESS_SLIDER_WIDTH &&
             py >= slider_y && py < slider_y + BRIGHTNESS_SLIDER_HEIGHT)
         {
-            pixel_buffer_set(pb, px, py, marker_color);
+            texture_set(pb, px, py, marker_color);
         }
     }
 }
 
-void draw_selected_color(PixelBuffer *pb, uint32_t color)
+void draw_selected_color(Texture *pb, uint32_t color)
 {
     int color_display_size = 30;
     int display_x = COLOR_PICKER_MARGIN;
@@ -86,7 +86,7 @@ void draw_selected_color(PixelBuffer *pb, uint32_t color)
     {
         for (int y = 0; y < color_display_size; y++)
         {
-            pixel_buffer_set(pb, display_x + x, display_y + y, color);
+            texture_set(pb, display_x + x, display_y + y, color);
         }
     }
 
@@ -94,13 +94,13 @@ void draw_selected_color(PixelBuffer *pb, uint32_t color)
     uint32_t border_color = 0xFFFFFFFF; // White border
     for (int x = 0; x < color_display_size; x++)
     {
-        pixel_buffer_set(pb, display_x + x, display_y, border_color);
-        pixel_buffer_set(pb, display_x + x, display_y + color_display_size - 1, border_color);
+        texture_set(pb, display_x + x, display_y, border_color);
+        texture_set(pb, display_x + x, display_y + color_display_size - 1, border_color);
     }
     for (int y = 0; y < color_display_size; y++)
     {
-        pixel_buffer_set(pb, display_x, display_y + y, border_color);
-        pixel_buffer_set(pb, display_x + color_display_size - 1, display_y + y, border_color);
+        texture_set(pb, display_x, display_y + y, border_color);
+        texture_set(pb, display_x + color_display_size - 1, display_y + y, border_color);
     }
 }
 
@@ -123,7 +123,7 @@ static float clamp_float(float value, float min, float max)
     return value;
 }
 // Function to handle color picker and brightness slider input
-void handle_color_picker_input(State *state, PixelBuffer *pb, Vec2 mouse_pos, uint32_t mouse_buttons)
+void handle_color_picker_input(State *state, Texture *pb, Vec2 mouse_pos, uint32_t mouse_buttons)
 {
     // Define hue-saturation picker position
     int picker_x = pb->width - COLOR_PICKER_SIZE - COLOR_PICKER_MARGIN;
@@ -190,7 +190,7 @@ void handle_color_picker_input(State *state, PixelBuffer *pb, Vec2 mouse_pos, ui
 }
 
 // Function to draw the 2D hue-saturation color picker
-void draw_hue_saturation_picker(PixelBuffer *pb, State *state)
+void draw_hue_saturation_picker(Texture *pb, State *state)
 {
     // Define color picker position
     int picker_x = pb->width - COLOR_PICKER_SIZE - COLOR_PICKER_MARGIN;
@@ -217,7 +217,7 @@ void draw_hue_saturation_picker(PixelBuffer *pb, State *state)
             uint32_t rgb_packed = ((uint32_t)r << 24) | ((uint32_t)g << 16) | ((uint32_t)b << 8) | 0xFF; // A=255
 
             // Set the pixel color
-            pixel_buffer_set(pb, picker_x + x, picker_y + y, rgb_packed);
+            texture_set(pb, picker_x + x, picker_y + y, rgb_packed);
         }
     }
 
@@ -225,13 +225,13 @@ void draw_hue_saturation_picker(PixelBuffer *pb, State *state)
     uint32_t border_color = 0xFFFFFFFF; // White border
     for (int x = 0; x < COLOR_PICKER_SIZE; x++)
     {
-        pixel_buffer_set(pb, picker_x + x, picker_y, border_color);
-        pixel_buffer_set(pb, picker_x + x, picker_y + COLOR_PICKER_SIZE - 1, border_color);
+        texture_set(pb, picker_x + x, picker_y, border_color);
+        texture_set(pb, picker_x + x, picker_y + COLOR_PICKER_SIZE - 1, border_color);
     }
     for (int y = 0; y < COLOR_PICKER_SIZE; y++)
     {
-        pixel_buffer_set(pb, picker_x, picker_y + y, border_color);
-        pixel_buffer_set(pb, picker_x + COLOR_PICKER_SIZE - 1, picker_y + y, border_color);
+        texture_set(pb, picker_x, picker_y + y, border_color);
+        texture_set(pb, picker_x + COLOR_PICKER_SIZE - 1, picker_y + y, border_color);
     }
 
     // Draw marker indicating current hue and saturation
@@ -249,7 +249,7 @@ void draw_hue_saturation_picker(PixelBuffer *pb, State *state)
             if (px >= picker_x && px < picker_x + COLOR_PICKER_SIZE &&
                 py >= picker_y && py < picker_y + COLOR_PICKER_SIZE)
             {
-                pixel_buffer_set(pb, px, py, marker_color);
+                texture_set(pb, px, py, marker_color);
             }
         }
     }
@@ -297,7 +297,7 @@ void draw_hue_saturation_picker(PixelBuffer *pb, State *state)
 //                 {
 
 //                     // get the face under the cursor
-//                     uint32_t face = pixel_buffer_get(face_buffer, x, y);
+//                     uint32_t face = texture_get(face_buffer, x, y);
 //                     // skip if value is uint32_max
 //                     if (face != UINT32_MAX)
 //                     {

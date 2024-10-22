@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "primitives.h"
-#include "pixel_buffer.h"
+#include "texture.h"
 
 typedef struct
 {
