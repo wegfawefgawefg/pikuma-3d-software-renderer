@@ -29,7 +29,7 @@ double degrees_to_radians(double degrees);
 double radians_to_degrees(double radians);
 
 char *trim_whitespace(char *str);
-static char *duplicate_string(const char *src);
+char *duplicate_string(const char *src);
 
 float map_range(float value, float in_min, float in_max, float out_min, float out_max);
 

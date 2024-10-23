@@ -149,7 +149,7 @@ char *trim_whitespace(char *str)
 }
 
 // Function to duplicate a string (similar to strdup)
-static char *duplicate_string(const char *src)
+char *duplicate_string(const char *src)
 {
     if (src == NULL)
         return NULL;

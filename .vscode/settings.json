@@ -17,6 +17,7 @@
         "vec2.h": "c",
         "su32a.h": "c",
         "texture.h": "c",
-        "system_error": "c"
+        "system_error": "c",
+        "material_library.h": "c"
     }
 }

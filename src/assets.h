@@ -6,7 +6,6 @@
 #include <SDL2/SDL.h>
 
 #include "texture.h"
-#include "stb_image.h"
 #include "mesh.h"
 #include "texture_multiframe.h"
 #include "texture_management.h"

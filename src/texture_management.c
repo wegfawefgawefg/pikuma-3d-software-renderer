@@ -11,8 +11,6 @@
 #include <errno.h>    // For error handling
 
 #include <gif_lib.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 #include "texture.h"
 #include "utils.h"
@@ -29,7 +27,7 @@ static int has_png_extension(const char *filename)
 }
 
 // Initialize a new TextureManager structure with a specified capacity
-TextureManager *textures_new(int max_entries)
+TextureManager *texture_manager_new(int max_entries)
 {
     if (max_entries <= 0)
     {
@@ -67,7 +65,7 @@ TextureManager *textures_new(int max_entries)
 }
 
 // Free all memory associated with a TextureManager structure
-void textures_free(TextureManager *textures)
+void texture_manager_free(TextureManager *textures)
 {
     if (!textures)
         return;
@@ -93,7 +91,7 @@ void textures_free(TextureManager *textures)
 }
 
 // Load all .png textures from a specified directory into the TextureManager array
-int textures_load_from_directory(TextureManager *textures, const char *directory_path)
+int texture_manager_load_from_directory(TextureManager *textures, const char *directory_path)
 {
     if (!textures || !directory_path)
     {
@@ -200,7 +198,7 @@ int textures_load_from_directory(TextureManager *textures, const char *directory
 }
 
 // Retrieve a Texture by its filename
-Texture *textures_get(TextureManager *textures, const char *filename)
+Texture *texture_manager_get(TextureManager *textures, const char *filename)
 {
     if (!textures || !filename)
         return NULL;
@@ -218,7 +216,7 @@ Texture *textures_get(TextureManager *textures, const char *filename)
 }
 
 // Print details of all loaded textures
-void textures_print(TextureManager *textures)
+void texture_manager_print(TextureManager *textures)
 {
     if (!textures)
     {

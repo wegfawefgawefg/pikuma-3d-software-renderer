@@ -13,6 +13,9 @@
 #include "utils.h"
 #include "texture.h"
 
+// sdl import
+#include <SDL2/SDL_image.h>
+
 SizedSDLTexture *sized_sdl_texture_load(const char *filename, SDL_Renderer *renderer)
 {
     char path[512];
@@ -57,7 +60,7 @@ typedef struct
     const char *error_message;
 } LoadResult;
 
-LoadResult load_texture(SizedSDLTexture **texture, const char *path, SDL_Renderer *renderer)
+LoadResult load_sized_sdl_texture(SizedSDLTexture **texture, const char *path, SDL_Renderer *renderer)
 {
     *texture = sized_sdl_texture_load(path, renderer);
     if (!*texture)
@@ -202,8 +205,9 @@ Assets *assets_load(void)
 
     // Load all PNG textures from the specified directory
     const char *texture_directory = "./assets/textures/";
-    TextureManager *texture_manager = texture_manager_new();
-    if (textures_load_from_directory(texture_manager, texture_directory) != 0)
+    const int max_textures = 64;
+    TextureManager *texture_manager = texture_manager_new(max_textures);
+    if (texture_manager_load_from_directory(texture_manager, texture_directory) != 0)
     {
         fprintf(stderr, "Failed to load textures from directory: %s\n", texture_directory);
         // Depending on your application's requirements, you might choose to exit or continue
@@ -230,7 +234,7 @@ void assets_free(Assets *assets)
 
     mfpb_free(assets->earth_mfpb);
 
-    textures_free(assets->texture_manager);
+    texture_manager_free(assets->texture_manager);
 
     free(assets);
 }

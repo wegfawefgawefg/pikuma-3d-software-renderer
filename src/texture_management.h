@@ -14,7 +14,7 @@ typedef struct
     Texture *texture; // Loaded Texture
 } TextureManagerEntry;
 
-// Structure to manage an array of textures
+// we have a lot of textures, we have to put them somewhere
 typedef struct
 {
     TextureManagerEntry *entries; // Dynamic array of texture entries
@@ -22,50 +22,14 @@ typedef struct
     int max_entries;              // Maximum capacity of the array
 } TextureManager;
 
-// Interface
+// Initialize a new TextureManager structure with a specified capacity
+TextureManager *texture_manager_new(int max_entries);
+void texture_manager_free(TextureManager *textures);
+void texture_manager_print(TextureManager *textures);
 
-//// Basic
-/**
- * @brief Initializes a new TextureManager structure with a specified capacity.
- *
- * @param max_entries Maximum number of textures the array can hold.
- * @return TextureManager* Pointer to the initialized TextureManager structure, or NULL on failure.
- */
-TextureManager *textures_new(int max_entries);
-
-/**
- * @brief Frees all memory associated with a TextureManager structure.
- *
- * @param textures Pointer to the TextureManager structure to be freed.
- */
-void textures_free(TextureManager *textures);
-
-//// Loading
-/**
- * @brief Loads all .png textures from a specified directory into the TextureManager array.
- *
- * @param textures Pointer to the TextureManager structure.
- * @param directory_path Path to the directory containing .png files.
- * @return int Returns 0 on success, -1 on failure.
- */
-int textures_load_from_directory(TextureManager *textures, const char *directory_path);
-
-//// Retrieval
-/**
- * @brief Retrieves a Texture by its filename.
- *
- * @param textures Pointer to the TextureManager structure.
- * @param filename Name of the texture file to retrieve.
- * @return Texture* Pointer to the Texture if found, or NULL if not found.
- */
-Texture *textures_get(TextureManager *textures, const char *filename);
-
-//// Information
-/**
- * @brief Prints details of all loaded textures.
- *
- * @param textures Pointer to the TextureManager structure.
- */
-void textures_print(TextureManager *textures);
+// loads all .png's from a directory into the texture manager: returns 0 on success, -1 on failure
+int texture_manager_load_from_directory(TextureManager *textures, const char *directory_path);
+// gets a texture by its filename, or NULL if not found
+Texture *texture_manager_get(TextureManager *textures, const char *filename);
 
 #endif // TEXTURE_MANAGEMENT_H
