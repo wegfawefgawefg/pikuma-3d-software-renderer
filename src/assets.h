@@ -40,10 +40,8 @@ typedef struct
     Mesh *quad_mesh;
     Mesh *triangle_mesh;
 
-    // Animated Texture
+    // MeshManager *mesh_manager;
     MultiFrameTexture *earth_mfpb;
-
-    // TextureManager manager
     TextureManager *texture_manager;
 
     MaterialManager *material_manager;
