@@ -10,6 +10,7 @@
 #include "mesh.h"
 #include "texture_multiframe.h"
 #include "texture_management.h"
+#include "material_management.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // MISC
@@ -40,11 +41,13 @@ typedef struct
     Mesh *quad_mesh;
     Mesh *triangle_mesh;
 
-    // TextureManager manager
-    TextureManager *textures;
-
-    // Animated TextureManager
+    // Animated Texture
     MultiFrameTexture *earth_mfpb;
+
+    // TextureManager manager
+    TextureManager *texture_manager;
+
+    MaterialManager *material_manager;
 } Assets;
 
 Assets *assets_new(void);

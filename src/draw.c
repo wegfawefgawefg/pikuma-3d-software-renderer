@@ -122,7 +122,7 @@ void draw(Texture *pb, FTexture *z_buffer, State *state, Assets *assets)
 
     float scalef = 20.0;
     Mesh *mesh = assets->gba_mesh;
-    Texture *texture = textures_get(assets->textures, "gba.png");
+    Texture *texture = textures_get(assets->texture_manager, "gba.png");
     // Mesh *mesh = assets->earth_mesh;
     // Texture *texture = assets->manhat_texture;
     // Texture *texture = assets->earth_mfpb->frames[assets->earth_mfpb->current_frame];

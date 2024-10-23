@@ -163,8 +163,10 @@ Assets *assets_new(void)
     assets->cube_mesh = NULL;
     assets->quad_mesh = NULL;
     assets->triangle_mesh = NULL;
-    assets->textures = NULL;
     assets->earth_mfpb = NULL;
+
+    assets->texture_manager = NULL;
+    assets->material_manager = NULL;
 
     return assets;
 }
@@ -200,13 +202,13 @@ Assets *assets_load(void)
 
     // Load all PNG textures from the specified directory
     const char *texture_directory = "./assets/textures/";
-    TextureManager *textures = textures_new();
-    if (textures_load_from_directory(textures, texture_directory) != 0)
+    TextureManager *texture_manager = texture_manager_new();
+    if (textures_load_from_directory(texture_manager, texture_directory) != 0)
     {
         fprintf(stderr, "Failed to load textures from directory: %s\n", texture_directory);
         // Depending on your application's requirements, you might choose to exit or continue
     }
-    assets->textures = textures;
+    assets->texture_manager = texture_manager;
 
     // All assets loaded successfully
     return assets;
@@ -228,7 +230,7 @@ void assets_free(Assets *assets)
 
     mfpb_free(assets->earth_mfpb);
 
-    textures_free(assets->textures);
+    textures_free(assets->texture_manager);
 
     free(assets);
 }
