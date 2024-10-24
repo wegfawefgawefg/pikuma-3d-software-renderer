@@ -28,7 +28,6 @@ static int initialize_shape(Shape *shape)
     return 0;
 }
 
-// Main function to load a model from an OBJ file using two-pass approach
 Model *model_load_from_file(const char *filename)
 {
     if (!filename)
@@ -302,12 +301,19 @@ Model *model_load_from_file(const char *filename)
                     fclose(file);
                     return NULL;
                 }
-                // set the shape's name
+                // Set the shape's name
                 if (model->shapes[current_shape_index].name)
                 {
                     free(model->shapes[current_shape_index].name);
                 }
                 model->shapes[current_shape_index].name = strdup(shape_name);
+                if (!model->shapes[current_shape_index].name)
+                {
+                    fprintf(stderr, "Failed to duplicate shape name.\n");
+                    model_free(model);
+                    fclose(file);
+                    return NULL;
+                }
             }
             else
             {
@@ -453,37 +459,17 @@ Model *model_load_from_file(const char *filename)
                 Shape *current_shape = &model->shapes[current_shape_index];
 
                 // Append indices to the current shape
-                if (current_shape->vertex_indices->length + 3 > model->shape_count)
-                {
-                    fprintf(stderr, "Vertex indices exceed allocated memory for Shape %d.\n", current_shape_index);
-                    model_free(model);
-                    fclose(file);
-                    return NULL;
-                }
+                // Removed incorrect boundary checks
                 current_shape->vertex_indices->data[current_shape->vertex_indices->length] = v_idx[0];
                 current_shape->vertex_indices->data[current_shape->vertex_indices->length + 1] = v_idx[1];
                 current_shape->vertex_indices->data[current_shape->vertex_indices->length + 2] = v_idx[2];
                 current_shape->vertex_indices->length += 3;
 
-                if (current_shape->texcoord_indices->length + 3 > model->shape_count * 3)
-                {
-                    fprintf(stderr, "Texcoord indices exceed allocated memory for Shape %d.\n", current_shape_index);
-                    model_free(model);
-                    fclose(file);
-                    return NULL;
-                }
                 current_shape->texcoord_indices->data[current_shape->texcoord_indices->length] = vt_idx[0];
                 current_shape->texcoord_indices->data[current_shape->texcoord_indices->length + 1] = vt_idx[1];
                 current_shape->texcoord_indices->data[current_shape->texcoord_indices->length + 2] = vt_idx[2];
                 current_shape->texcoord_indices->length += 3;
 
-                if (current_shape->normal_indices->length + 3 > model->shape_count * 3)
-                {
-                    fprintf(stderr, "Normal indices exceed allocated memory for Shape %d.\n", current_shape_index);
-                    model_free(model);
-                    fclose(file);
-                    return NULL;
-                }
                 current_shape->normal_indices->data[current_shape->normal_indices->length] = vn_idx[0];
                 current_shape->normal_indices->data[current_shape->normal_indices->length + 1] = vn_idx[1];
                 current_shape->normal_indices->data[current_shape->normal_indices->length + 2] = vn_idx[2];

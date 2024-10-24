@@ -135,16 +135,6 @@ Assets *assets_load(void)
         return NULL;
     }
 
-    // Load all 3d model related files from the specified directory
-    const char *model_directory = "./assets/models/";
-    ModelManager *model_manager = model_manager_load_from_directory(model_directory);
-    if (!model_manager)
-    {
-        fprintf(stderr, "Failed to load models from directory: %s\n", model_directory);
-    }
-    assets->model_manager = model_manager;
-    model_manager_print(model_manager);
-
     // Load all materials from the specified directory
     const char *material_directory = "./assets/materials/";
     MaterialManager *material_manager = material_manager_load_from_directory(material_directory);
@@ -165,6 +155,16 @@ Assets *assets_load(void)
     }
     assets->texture_manager = texture_manager;
     texture_manager_print(texture_manager);
+
+    // Load all 3d model related files from the specified directory
+    const char *model_directory = "./assets/models/";
+    ModelManager *model_manager = model_manager_load_from_directory(model_directory);
+    if (!model_manager)
+    {
+        fprintf(stderr, "Failed to load models from directory: %s\n", model_directory);
+    }
+    assets->model_manager = model_manager;
+    model_manager_print(model_manager);
 
     // All assets loaded successfully
     return assets;

@@ -1,5 +1,8 @@
 # Rectangle made of two triangles with normals
 
+mtllib quad.mtl
+o quad
+
 v -1.0  1.0 0.0  # Vertex 1
 v -1.0 -1.0 0.0  # Vertex 2
 v  1.0 -1.0 0.0  # Vertex 3

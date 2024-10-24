@@ -170,6 +170,8 @@ TextureManager *texture_manager_load_from_directory(const char *directory_path)
             texture_manager->entries[current_entry_index].path = path_dup;
             texture_manager->entries[current_entry_index].filename = filename_dup;
             texture_manager->entries[current_entry_index].texture = loaded_texture;
+
+            current_entry_index += 1;
         }
     }
 
