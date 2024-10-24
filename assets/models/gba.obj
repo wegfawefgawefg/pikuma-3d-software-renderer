@@ -1,7 +1,7 @@
 # Blender v2.83.5 OBJ File: ''
 # www.blender.org
 mtllib gba2.mtl
-o Cube.001
+o gba
 v -0.053721 1.181635 -1.562607
 v 0.080782 1.080163 -1.979595
 v -0.176084 1.080163 -1.979595

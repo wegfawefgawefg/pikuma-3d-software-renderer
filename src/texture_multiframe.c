@@ -34,64 +34,72 @@ static uint32_t GetColorFromIndex(const GifFileType *gif, int colorIndex)
     return RGBToRGBA(color.Red, color.Green, color.Blue, 255);
 }
 
-// mfpb new
-MultiFrameTexture *mfpb_new(int num_frames, int width, int height)
+// mft new
+MultiFrameTexture *mft_new(int num_frames, int width, int height)
 {
-    MultiFrameTexture *mfpb = (MultiFrameTexture *)malloc(sizeof(MultiFrameTexture));
-    if (mfpb == NULL)
+    MultiFrameTexture *mft = (MultiFrameTexture *)malloc(sizeof(MultiFrameTexture));
+    if (mft == NULL)
     {
         return NULL;
     }
 
-    mfpb->num_frames = num_frames;
-    mfpb->current_frame = 0;
-    mfpb->frames = (Texture **)malloc(num_frames * sizeof(Texture *));
-    if (mfpb->frames == NULL)
+    mft->num_frames = num_frames;
+    mft->current_frame = 0;
+    mft->frames = (Texture **)malloc(num_frames * sizeof(Texture *));
+    if (mft->frames == NULL)
     {
-        free(mfpb);
+        free(mft);
         return NULL;
     }
 
     for (int i = 0; i < num_frames; i++)
     {
-        mfpb->frames[i] = texture_new(width, height);
-        if (mfpb->frames[i] == NULL)
+        mft->frames[i] = texture_new(width, height);
+        if (mft->frames[i] == NULL)
         {
-            mfpb_free(mfpb);
+            mft_free(mft);
             return NULL;
         }
     }
 
-    return mfpb;
+    return mft;
 }
 
-// mfpb free
-void mfpb_free(MultiFrameTexture *mfpb)
+// mft free
+void mft_free(MultiFrameTexture *mft)
 {
-    if (mfpb == NULL)
+    if (mft == NULL)
     {
         return;
     }
 
-    for (int i = 0; i < mfpb->num_frames; i++)
+    for (int i = 0; i < mft->num_frames; i++)
     {
-        texture_free(mfpb->frames[i]);
+        texture_free(mft->frames[i]);
     }
 
-    free(mfpb->frames);
-    free(mfpb);
+    free(mft->frames);
+    free(mft);
 }
 
-// mfpb next frame
-void mfpb_next_frame(MultiFrameTexture *mfpb)
+// mft next frame
+void mft_next_frame(MultiFrameTexture *mft)
 {
-    mfpb->current_frame = (mfpb->current_frame + 1) % mfpb->num_frames;
+    mft->current_frame = (mft->current_frame + 1) % mft->num_frames;
 }
 
-MultiFrameTexture *mfpb_load_from_gif(const char *filename)
+MultiFrameTexture *mft_load_from_gif(const char *path)
 {
-    char path[512];
-    snprintf(path, sizeof(path), "./assets/animated_textures/%s", filename);
+    char filename[256];
+    // extract the filename from the path
+    for (int i = strlen(path) - 1; i >= 0; i--)
+    {
+        if (path[i] == '/')
+        {
+            strncpy(filename, path + i + 1, 256);
+            break;
+        }
+    }
 
     int error = 0;
     GifFileType *gif = DGifOpenFileName(path, &error);
@@ -120,8 +128,8 @@ MultiFrameTexture *mfpb_load_from_gif(const char *filename)
     int width = gif->SWidth;
     int height = gif->SHeight;
 
-    MultiFrameTexture *mfpb = mfpb_new(num_frames, width, height);
-    if (mfpb == NULL)
+    MultiFrameTexture *mft = mft_new(num_frames, width, height);
+    if (mft == NULL)
     {
         fprintf(stderr, "Failed to allocate MultiFrameTexture\n");
         DGifCloseFile(gif, &error);
@@ -133,7 +141,7 @@ MultiFrameTexture *mfpb_load_from_gif(const char *filename)
     if (base_buffer == NULL)
     {
         fprintf(stderr, "Failed to allocate base Texture\n");
-        mfpb_free(mfpb);
+        mft_free(mft);
         DGifCloseFile(gif, &error);
         return NULL;
     }
@@ -157,7 +165,7 @@ MultiFrameTexture *mfpb_load_from_gif(const char *filename)
         {
             fprintf(stderr, "Failed to allocate temp Texture for frame %d\n", i);
             texture_free(base_buffer);
-            mfpb_free(mfpb);
+            mft_free(mft);
             DGifCloseFile(gif, &error);
             return NULL;
         }
@@ -179,7 +187,7 @@ MultiFrameTexture *mfpb_load_from_gif(const char *filename)
             fprintf(stderr, "No color map found for frame %d\n", i);
             texture_free(temp_buffer);
             texture_free(base_buffer);
-            mfpb_free(mfpb);
+            mft_free(mft);
             DGifCloseFile(gif, &error);
             return NULL;
         }
@@ -205,7 +213,7 @@ MultiFrameTexture *mfpb_load_from_gif(const char *filename)
         }
 
         // Add the temp_buffer to MultiFrameTexture
-        mfpb->frames[i] = temp_buffer;
+        mft->frames[i] = temp_buffer;
 
         // Update the base buffer based on the disposal method
         // For simplicity, we'll assume disposal method 1 (do not dispose)
@@ -225,5 +233,5 @@ MultiFrameTexture *mfpb_load_from_gif(const char *filename)
 
     texture_free(base_buffer);
     DGifCloseFile(gif, &error);
-    return mfpb;
+    return mft;
 }

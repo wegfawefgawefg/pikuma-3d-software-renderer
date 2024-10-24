@@ -6,8 +6,8 @@
 // Shape (submesh) struct to hold indices and material info
 typedef struct
 {
-    char *material_library_name; // Material library
-    char *material_name;         // Material reference
+    char *name;          // Shape name
+    char *material_name; // Material reference
 
     SU32A *vertex_indices;   // Indices into MeshData->vertices
     SU32A *normal_indices;   // Indices into MeshData->normals

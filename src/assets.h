@@ -10,6 +10,7 @@
 #include "texture_multiframe.h"
 #include "texture_management.h"
 #include "material_management.h"
+#include "model_manager.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // MISC
@@ -34,17 +35,11 @@ Mesh *mesh_load_from_obj(const char *filename);
 // defs for the assets, such as gba overlay, gba power light, pointer
 typedef struct
 {
-    // Meshes
-    Mesh *gba_mesh;
-    Mesh *cube_mesh;
-    Mesh *quad_mesh;
-    Mesh *triangle_mesh;
-
-    // MeshManager *mesh_manager;
-    MultiFrameTexture *earth_mfpb;
+    ModelManager *model_manager;
+    MaterialManager *material_manager;
     TextureManager *texture_manager;
 
-    MaterialManager *material_manager;
+    MultiFrameTexture *earth_mft;
 } Assets;
 
 Assets *assets_new(void);

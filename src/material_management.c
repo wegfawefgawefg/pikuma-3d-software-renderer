@@ -12,100 +12,105 @@
 #include "material_library.h"
 #include "utils.h"
 
-MaterialManager material_manager_init(size_t max_libraries)
+// Helper function to check if a file has a .obj extension (case-insensitive)
+static int has_mtl_extension(const char *filename)
 {
-    MaterialManager manager;
-    manager.libraries = (MaterialLibrary *)malloc(max_libraries * sizeof(MaterialLibrary));
-    if (manager.libraries == NULL)
-    {
-        fprintf(stderr, "Failed to allocate memory for MaterialManager.\n");
-        manager.count = 0;
-        manager.max_libraries = 0;
-        return manager;
-    }
-    manager.count = 0;
-    manager.max_libraries = max_libraries;
-    return manager;
+    if (!filename)
+        return 0;
+    const char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename)
+        return 0;
+    return (strcasecmp(dot, ".mtl") == 0); // Case-insensitive comparison
 }
 
-int material_manager_load_from_directory(MaterialManager *manager, const char *directory_path)
+MaterialManager *material_manager_load_from_directory(const char *directory_path)
 {
-    if (manager == NULL)
+    if (!directory_path)
     {
-        fprintf(stderr, "MaterialManager is NULL.\n");
-        return -1;
+        fprintf(stderr, "Invalid arguments to material_manager_load_from_directory.\n");
+        return NULL;
     }
 
-    DIR *dir = opendir(directory_path);
-    if (dir == NULL)
-    {
-        fprintf(stderr, "Failed to open directory: %s\nError: %s\n", directory_path, strerror(errno));
-        return -1;
-    }
-
+    DIR *dir;
     struct dirent *entry;
-    int success = 0;
 
+    dir = opendir(directory_path);
+    if (!dir)
+    {
+        perror("opendir");
+        fprintf(stderr, "Failed to open directory: %s\n", directory_path);
+        return NULL;
+    }
+
+    // allocate memory for the MaterialManager
+    MaterialManager *manager = (MaterialManager *)malloc(sizeof(MaterialManager));
+    if (!manager)
+    {
+        fprintf(stderr, "Memory allocation failed for MaterialManager.\n");
+        closedir(dir);
+        return NULL;
+    }
+    manager->count = 0;
+    manager->libraries = NULL;
+
+    // Count the number of .mtl files in the directory
     while ((entry = readdir(dir)) != NULL)
     {
         // Skip directories
         if (entry->d_type == DT_DIR)
             continue;
 
-        // Check if the file has a .mtl extension
         const char *filename = entry->d_name;
-        size_t len = strlen(filename);
-        if (len < 4)
-            continue; // Not enough length for ".mtl"
 
-        if (strcasecmp(filename + len - 4, ".mtl") != 0)
-            continue; // Not a .mtl file
-
-        // Check if manager has space
-        if (manager->count >= manager->max_libraries)
+        if (has_mtl_extension(filename))
         {
-            fprintf(stderr, "MaterialManager has reached its maximum capacity of %zu libraries.\n", manager->max_libraries);
-            success = -1;
-            break;
+            manager->count += 1;
         }
+    }
+    rewinddir(dir);
 
-        // Construct full path
-        size_t path_len = strlen(directory_path);
-        size_t file_len = strlen(filename);
-        // +2 for possible '/' and null terminator
-        char *full_path = (char *)malloc(path_len + 1 + file_len + 1);
-        if (full_path == NULL)
+    // Allocate memory for the Model array
+    manager->libraries = (MaterialLibrary *)malloc(manager->count * sizeof(MaterialLibrary));
+    if (manager->libraries == NULL)
+    {
+        fprintf(stderr, "Memory allocation failed for MaterialLibrary array.\n");
+        closedir(dir);
+        free(manager);
+        return NULL;
+    }
+
+    int current_library_index = 0;
+    while ((entry = readdir(dir)) != NULL)
+    {
+        // Skip directories
+        if (entry->d_type == DT_DIR)
+            continue;
+
+        const char *filename = entry->d_name;
+
+        if (has_mtl_extension(filename))
         {
-            fprintf(stderr, "Memory allocation failed for full path.\n");
-            success = -1;
-            break;
+            // Construct the full path for loading the model
+            char full_path[512];
+            snprintf(full_path, sizeof(full_path), "%s/%s", directory_path, filename);
+
+            // Load the material library
+            MaterialLibrary library = material_library_load(full_path);
+            if (library.materials == NULL)
+            {
+                fprintf(stderr, "Failed to load material library from file: %s\n", full_path);
+                // Continue to next file
+                continue;
+            }
+
+            // Assign to MaterialManager
+            manager->libraries[current_library_index] = library;
+            current_library_index += 1;
         }
-
-        strcpy(full_path, directory_path);
-        // Add '/' if not present
-        if (directory_path[path_len - 1] != '/' && directory_path[path_len - 1] != '\\')
-        {
-            strcat(full_path, "/");
-        }
-        strcat(full_path, filename);
-
-        // Load the material library
-        MaterialLibrary library = material_library_load(full_path);
-        if (library.materials == NULL)
-        {
-            fprintf(stderr, "Failed to load material library from file: %s\n", full_path);
-            free(full_path);
-            continue; // Skip to next file
-        }
-
-        // Assign to MaterialManager
-        manager->libraries[manager->count++] = library;
-
-        free(full_path);
     }
 
     closedir(dir);
-    return success;
+    return manager;
 }
 
 MaterialLibrary *material_manager_get_library(const MaterialManager *manager, const char *name)
@@ -154,5 +159,4 @@ void material_manager_free(MaterialManager *manager)
     free(manager->libraries);
     manager->libraries = NULL;
     manager->count = 0;
-    manager->max_libraries = 0;
 }

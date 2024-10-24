@@ -28,7 +28,6 @@ void draw_mesh(
     SU32A *indices,
     SFA *texcoords,
     SU32A *texcoord_indices,
-    SU32A *colors,
 
     Vec3 pos,
     Vec3 rot,
@@ -114,18 +113,19 @@ void draw(Texture *pb, FTexture *z_buffer, State *state, Assets *assets)
     // IVec2 screen_center = ivec2_create(pb->width / 2, pb->height / 2);
     draw_grid(pb, ivec2_create(0, 0), ivec2_create(pb->width - 1, pb->height - 1), 20, COLOR_GRAY_DARK);
 
-    // every 10 frames increment earth_mfpb
+    // every 10 frames increment earth_mft
     if (state->frame_count % 4 == 0)
     {
-        mfpb_next_frame(assets->earth_mfpb);
+        mft_next_frame(assets->earth_mft);
     }
 
     float scalef = 20.0;
-    Mesh *mesh = assets->gba_mesh;
+    Model *model = model_manager_get_model(assets->model_manager, "gba.obj");
     Texture *texture = texture_manager_get(assets->texture_manager, "gba.png");
+    Shape *shape = model_get_shape(model, "gba");
     // Mesh *mesh = assets->earth_mesh;
     // Texture *texture = assets->manhat_texture;
-    // Texture *texture = assets->earth_mfpb->frames[assets->earth_mfpb->current_frame];
+    // Texture *texture = assets->earth_mft->frames[assets->earth_mft->current_frame];
 
     float x_pos = 0.0;
     float y_pos = 0.0;
@@ -140,11 +140,10 @@ void draw(Texture *pb, FTexture *z_buffer, State *state, Assets *assets)
 
         state,
         texture,
-        mesh->vertices,
-        mesh->vertex_indices,
-        mesh->texcoords,
-        mesh->texcoord_indices,
-        mesh->colors,
+        model->mesh->vertices,
+        shape->vertex_indices,
+        model->mesh->texcoords,
+        shape->texcoord_indices,
 
         vec3_create(x_pos, y_pos, z_pos),       // position
         vec3_create(x_angle, y_angle, z_angle), // rotation
