@@ -21,8 +21,6 @@ typedef struct
     float saturation; // Saturation component (0.0 to 1.0)
     float brightness; // Brightness (Value) component (0.0 to 1.0)
 
-    float scale;
-
     Vec2 pointer_pos;
 
 } State;

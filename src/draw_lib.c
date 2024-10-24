@@ -357,6 +357,10 @@ void draw_triangle_scanline_with_texture(
     Triangle t_uv,
     float z)
 {
+    // if texture is null, return
+    if (!texture)
+        return;
+
     // Extract vertex positions
     Vec2 v0 = t.p1;
     Vec2 v1 = t.p2;
@@ -429,10 +433,41 @@ void draw_triangle_scanline_with_texture(
         for (int x = x_start; x <= x_end; x++)
         {
             // Clamp UV coordinates to [0, 1] to avoid sampling outside the texture
+            // modulus the u and v values to keep them in the range [0, 1]
+            // the values right now can even be negative so we have to manually do this
+            if (u > 1.0f)
+            {
+                // lets say u is 14.2
+                // 14.2 % 1 = 0.2
+                u = u - (int)u;
+            }
+            else if (u < 0.0f)
+            {
+                // lets say u is -14.2
+                // -14.2 % 1 = 0.8
+                u = 1.0f + u - (int)u;
+            }
+
+            if (v > 1.0f)
+            {
+                v = v - (int)v;
+            }
+            else if (v < 0.0f)
+            {
+                v = 1.0f + v - (int)v;
+            }
+
             float clamped_u = fminf(fmaxf(u, 0.0f), 1.0f);
             float clamped_v = fminf(fmaxf(v, 0.0f), 1.0f);
+            // // invert u and v
+            clamped_u = 1.0f - clamped_u;
+            clamped_v = 1.0f - clamped_v;
 
             // Convert UV coordinates to texture space indices
+            // print the clamped u and v
+            // printf("clamped u: %f, clamped v: %f\n", clamped_u, clamped_v);
+            // print the texture dimensions
+            // printf("texture width: %d, texture height: %d\n", texture->width, texture->height);
             int tex_x = (int)(clamped_u * (texture->width - 1));
             int tex_y = (int)(clamped_v * (texture->height - 1));
 

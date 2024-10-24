@@ -43,7 +43,7 @@ void blit_string(Texture *target_pb, Texture *letters_pb, const char *str, int x
 
 IVec2 calculate_new_top_left(Texture *src, float degrees, Vec2 center_of_rotation);
 void color_rotate(Texture *pb, float hue_shift);
-Texture *pixelbuffer_load_from_png(const char *path);
+Texture *texture_load_from_png(const char *path);
 void draw_outline(Texture *pb, uint32_t color);
 IVec2 get_center_of_pixelbuffer(Texture *pb);
 

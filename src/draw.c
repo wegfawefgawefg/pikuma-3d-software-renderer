@@ -69,7 +69,8 @@ void draw_mesh(
 
     Mat4 vp = mat4_create_vp(
         state->camera_pos, state->camera_target, state->camera_up,
-        degrees_to_radians(90.0), (float)pb->width / (float)pb->height, 0.1f, 100.0f);
+        // degrees_to_radians(90.0), (float)pb->width / (float)pb->height, 0.1f, 100.0f);
+        degrees_to_radians(90.0), (float)pb->width / (float)pb->height, 2.0f, 200.0f);
 
     Mat4 mvp = mat4_multiply(vp, model);
 
@@ -99,7 +100,7 @@ void draw_mesh(
         cam_dir);
 
     // Render lines
-    draw_tris_lines_with_depth(pb, screen_coords, indices, 0xFFFFFF06);
+    // draw_tris_lines_with_depth(pb, screen_coords, indices, 0xFFFFFF09);
 
     // Cleanup
     sfa_free(model_transformed_vertices);
@@ -119,74 +120,68 @@ void draw(Texture *pb, FTexture *z_buffer, State *state, Assets *assets)
         mft_next_frame(assets->earth_mft);
     }
 
-    float scalef = 20.0;
-    Model *model = model_manager_get_model(assets->model_manager, "gba.obj");
-    Texture *texture = texture_manager_get(assets->texture_manager, "gba.png");
-    Shape *shape = model_get_shape(model, "gba");
-    // Mesh *mesh = assets->earth_mesh;
-    // Texture *texture = assets->manhat_texture;
-    // Texture *texture = assets->earth_mft->frames[assets->earth_mft->current_frame];
+    float scalef = 200.0;
+    // Model *model = model_manager_get_model(assets->model_manager, "gba.obj");
+    // Texture *texture = texture_manager_get(assets->texture_manager, "gba.png");
+    // Shape *shape = model_get_shape(model, "gba");
+    // // Mesh *mesh = assets->earth_mesh;
+    // // Texture *texture = assets->manhat_texture;
+    // // Texture *texture = assets->earth_mft->frames[assets->earth_mft->current_frame];
 
-    float x_pos = 0.0;
-    float y_pos = 0.0;
-    float z_pos = 0.0;
-    float x_angle = 0.0;
-    float y_angle = state->frame_count * 0.01 - 0.3;
-    // float y_angle = radians_to_degrees(90.0);
-    float z_angle = 0.0;
-    draw_mesh(
-        pb,
-        z_buffer,
+    // float x_pos = 0.0;
+    // float y_pos = 0.0;
+    // float z_pos = 0.0;
+    // float x_angle = 0.0;
+    // float y_angle = state->frame_count * 0.01 - 0.3;
+    // // float y_angle = radians_to_degrees(90.0);
+    // float z_angle = 0.0;
+    // draw_mesh(
+    //     pb,
+    //     z_buffer,
 
-        state,
-        texture,
-        model->mesh->vertices,
-        shape->vertex_indices,
-        model->mesh->texcoords,
-        shape->texcoord_indices,
+    //     state,
+    //     texture,
+    //     model->mesh->vertices,
+    //     shape->vertex_indices,
+    //     model->mesh->texcoords,
+    //     shape->texcoord_indices,
 
-        vec3_create(x_pos, y_pos, z_pos),       // position
-        vec3_create(x_angle, y_angle, z_angle), // rotation
-        vec3_create(scalef, scalef, scalef)     // scale
-    );
+    //     vec3_create(x_pos, y_pos, z_pos),       // position
+    //     vec3_create(x_angle, y_angle, z_angle), // rotation
+    //     vec3_create(scalef, scalef, scalef)     // scale
+    // );
+
+    // draw peaches_castle.obj
+    // we have to loop through all the shapes in the model
+    // and draw them
+    Model *model;
+    Shape *shape;
+    Texture *texture;
+    model = model_manager_get_model(assets->model_manager, "peaches_castle.obj");
+    MaterialLibrary *material_library = material_manager_get_library(assets->material_manager, model->material_library_name);
+    for (int i = 0; i < model->shape_count; i++)
+    {
+        shape = &model->shapes[i];
+        Material *material = material_library_get_material(material_library, shape->material_name);
+        // print the diffuse_map name
+        texture = texture_manager_get(assets->texture_manager, material->diffuse_map);
+        draw_mesh(
+            pb,
+            z_buffer,
+
+            state,
+            texture,
+            model->mesh->vertices,
+            shape->vertex_indices,
+            model->mesh->texcoords,
+            shape->texcoord_indices,
+
+            vec3_create(0.0, 0.0, 0.0),         // position
+            vec3_create(0.0, 0.0, 0.0),         // rotation
+            vec3_create(scalef, scalef, scalef) // scale
+        );
+    }
 
     // Vec2 mouse_pos = ivec2_to_vec2(get_mouse_pos());
     // draw_cursor(pb, mouse_pos.x, mouse_pos.y, 10, 0xFFFFFFFF);
-
-    // tl, 21/93
-    // br, 47/110
-
-    // we want a copy of last frame, flipped vertically and horizontally
-    // then we want to blit that to the gba_texture
-    // at the coords
-    // tl: 21, 93
-    // br: 47, 110
-
-    // we can do this with coordinate mapping
-    // int y_start = 93;
-    // int y_end = 110;
-    // int x_start = 21;
-    // int x_end = 47;
-    int y_start = 373;
-    int y_end = 442;
-    int x_start = 88;
-    int x_end = 189;
-
-    for (int y = y_start; y < y_end + 1; y++)
-    {
-        for (int x = x_start; x < x_end + 1; x++)
-        {
-            // get the sample position for last_frame
-            // float map_range(float value, float in_min, float in_max, float out_min, float out_max);
-            int sample_x = (int)map_range(x, x_start, x_end, 0, pb->width - 1);
-            int sample_y = (int)map_range(y, y_start, y_end, pb->height - 1, 0);
-            uint32_t color = texture_get(pb, sample_x, sample_y);
-            // replace clear with black
-            if (color == 0x00000000)
-            {
-                color = 0x000000FF;
-            }
-            texture_set(texture, x, y, color);
-        }
-    }
 }

@@ -45,6 +45,8 @@ void texture_set(Texture *pb, int x, int y, uint32_t color)
 {
     if (x < 0 || x >= pb->width || y < 0 || y >= pb->height)
     {
+        // print the value
+        printf("x: %d, y: %d\n", x, y);
         return;
     }
     pb->pixels[y * pb->width + x] = color;
@@ -403,7 +405,7 @@ void color_rotate(Texture *pb, float hue_shift)
     }
 }
 
-Texture *pixelbuffer_load_from_png(const char *path)
+Texture *texture_load_from_png(const char *path)
 {
     // print the path
     printf("Loading image from path: %s\n", path);

@@ -153,8 +153,8 @@ TextureManager *texture_manager_load_from_directory(const char *directory_path)
                 snprintf(full_path, full_path_length, "%s%s", path_dup, filename_dup);
             }
 
-            // Load the texture using pixelbuffer_load_from_png
-            Texture *loaded_texture = pixelbuffer_load_from_png(full_path);
+            // Load the texture using texture_load_from_png
+            Texture *loaded_texture = texture_load_from_png(full_path);
             if (!loaded_texture)
             {
                 fprintf(stderr, "Failed to load texture from %s.\n", full_path);
