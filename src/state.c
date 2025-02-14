@@ -13,7 +13,7 @@ State *new_state(void)
     state->quit = false;
     state->frame_count = 0;
 
-    state->camera_pos = vec3_create(0, 0, -100);
+    state->camera_pos = vec3_create(0, 0, -500);
     state->camera_target = vec3_create(0, 0, 0);
     state->camera_up = vec3_create(0, 1, 0);
 

@@ -70,7 +70,7 @@ void draw_mesh(
     Mat4 vp = mat4_create_vp(
         state->camera_pos, state->camera_target, state->camera_up,
         // degrees_to_radians(90.0), (float)pb->width / (float)pb->height, 0.1f, 100.0f);
-        degrees_to_radians(90.0), (float)pb->width / (float)pb->height, 2.0f, 200.0f);
+        degrees_to_radians(90.0), (float)pb->width / (float)pb->height, 0.1f, 100.0f);
 
     Mat4 mvp = mat4_multiply(vp, model);
 
@@ -120,7 +120,7 @@ void draw(Texture *pb, FTexture *z_buffer, State *state, Assets *assets)
         mft_next_frame(assets->earth_mft);
     }
 
-    float scalef = 200.0;
+    float scalef = 50.0;
     // Model *model = model_manager_get_model(assets->model_manager, "gba.obj");
     // Texture *texture = texture_manager_get(assets->texture_manager, "gba.png");
     // Shape *shape = model_get_shape(model, "gba");
@@ -176,9 +176,9 @@ void draw(Texture *pb, FTexture *z_buffer, State *state, Assets *assets)
             model->mesh->texcoords,
             shape->texcoord_indices,
 
-            vec3_create(0.0, 0.0, 0.0),         // position
-            vec3_create(0.0, 0.0, 0.0),         // rotation
-            vec3_create(scalef, scalef, scalef) // scale
+            vec3_create(0.0, 0.0, 0.0),                       // position
+            vec3_create(0.0, degrees_to_radians(180.0), 0.0), // rotation
+            vec3_create(scalef, scalef, scalef)               // scale
         );
     }
 

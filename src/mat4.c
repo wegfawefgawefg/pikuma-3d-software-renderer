@@ -179,6 +179,10 @@ Mat4 mat4_rotate(float angle_rad, Vec3 axis)
 }
 
 // Create a perspective projection matrix
+/*
+    Info about the near and far plane:
+    https://learnopengl.com/Advanced-OpenGL/Depth`-testing
+*/
 Mat4 mat4_perspective(float fov_rad, float aspect, float near, float far)
 {
     Mat4 result = {0};

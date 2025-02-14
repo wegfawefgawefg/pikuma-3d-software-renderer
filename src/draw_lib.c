@@ -741,7 +741,7 @@ void draw_tris_with_colors_and_depth_with_face_buffer(
         }
 
         // skip if they are too close to the camera
-        const float near = 40.0f;
+        const float near = 1.0f;
         if (vertices->data[idx1 * 3 + 2] < near && vertices->data[idx2 * 3 + 2] < near && vertices->data[idx3 * 3 + 2] < near)
         {
             continue;
